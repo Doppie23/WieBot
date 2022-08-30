@@ -1,5 +1,5 @@
 import os
-
+from redditpost import randomcopypasta
 import discord
 from dotenv import load_dotenv
 
@@ -17,13 +17,17 @@ async def on_ready():
 @client.event
 async def on_message(message):
     if message.author == client.user:
-        print('eigen bericht')
+        # print('eigen bericht')
         return
 
         # print(message.content)
     if message.content.startswith('wie'):
         user = message.author.id
         await message.channel.send(f"<@{user}> wie vroeg?")
-        print('bericht')
+        # print('bericht')
+    
+    if message.content.startswith('!reddit'):
+        copypasta = randomcopypasta()
+        await message.channel.send(copypasta)
 
 client.run(TOKEN)
