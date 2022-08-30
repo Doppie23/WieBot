@@ -28,6 +28,12 @@ async def on_message(message):
     
     if message.content.startswith('!reddit'):
         copypasta = randomcopypasta()
+        leng = len(copypasta)
+        while len(copypasta) > 2000:
+            print(f'te lange post, reroll {leng}')
+            copypasta = randomcopypasta()
+        leng = len(copypasta)
         await message.channel.send(copypasta)
+        print(f'korte post {leng}')
 
 client.run(TOKEN)
