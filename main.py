@@ -12,12 +12,18 @@ client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
+    print(f'{client.user} is nu online')
 
 @client.event
 async def on_message(message):
+    if message.author == client.user:
+        print('eigen bericht')
+        return
+
+    
     # print(message.content)
-    if message.content.startswith('$hello'):
-        await message.channel.send('Hello!')
+    if message.content.startswith('wie'):
+        user = message.author.id
+        await message.channel.send(f"<@{user}> wie vroeg?")
         print('bericht')
 client.run(TOKEN)
