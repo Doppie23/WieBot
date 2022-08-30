@@ -20,10 +20,10 @@ async def on_message(message):
         print('eigen bericht')
         return
 
-    
-    # print(message.content)
+        # print(message.content)
     if message.content.startswith('wie'):
         user = message.author.id
         await message.channel.send(f"<@{user}> wie vroeg?")
         print('bericht')
+
 client.run(TOKEN)
