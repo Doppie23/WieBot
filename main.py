@@ -27,12 +27,14 @@ async def on_message(message):
         # print('bericht')
     
     if message.content.startswith('!reddit'):
+        wachtbericht = await message.channel.send('Aan het zoeken naar een copypasta...')
         copypasta = randomcopypasta()
         leng = len(copypasta)
         while len(copypasta) > 2000:
             print(f'te lange post, reroll {leng}')
             copypasta = randomcopypasta()
         leng = len(copypasta)
+        await wachtbericht.delete()
         await message.channel.send(copypasta)
         print(f'korte post {leng}')
 
