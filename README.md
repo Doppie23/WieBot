@@ -1,2 +1,2 @@
 # WieBot
-Test project met het maken van een Discord bot in Python.
+Test project, testen met het maken van een Discord bot in Python.
