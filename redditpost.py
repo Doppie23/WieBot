@@ -9,4 +9,5 @@ def randomcopypasta():
     copypasta = posts.selftext
     user = str(posts.author)
     bericht = copypasta + '\n' + '~/u/' + user
+
     return bericht
