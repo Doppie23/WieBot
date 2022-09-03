@@ -1,7 +1,7 @@
 from code import interact
 from http import client
 import os
-from redditpost import randomcopypasta
+from redditpost import randomcopypasta, randomshitpost
 import discord
 from discord import app_commands
 from dotenv import load_dotenv
@@ -27,7 +27,7 @@ class aclient(discord.Client):
 client = aclient()
 tree = app_commands.CommandTree(client)
 
-@tree.command(name="reddit", description="stuurt een random copypasta van r/copypasta", guild=guild)
+@tree.command(name="copypasta", description="stuurt een random copypasta van r/copypasta", guild=guild)
 async def self(interaction: discord.Interaction):
     copypasta = randomcopypasta()
     leng = len(copypasta)
@@ -37,6 +37,11 @@ async def self(interaction: discord.Interaction):
     leng = len(copypasta)
     print(f'korte post {leng}')
     await interaction.response.send_message(copypasta)
+
+@tree.command(name="shitpost", description="stuurt een random shitpost van r/shitposting", guild=guild)
+async def self(interaction: discord.Interaction):
+    shitpost = randomshitpost()
+    await interaction.response.send_message(shitpost)
 
 @client.event
 async def on_message(message):
