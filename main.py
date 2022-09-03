@@ -27,10 +27,6 @@ class aclient(discord.Client):
 client = aclient()
 tree = app_commands.CommandTree(client)
 
-@tree.command(name="test", description="test2", guild=guild)
-async def self(interaction: discord.Interaction):
-    await interaction.response.send_message('test')
-
 @tree.command(name="reddit", description="stuurt een random copypasta van r/copypasta", guild=guild)
 async def self(interaction: discord.Interaction):
     copypasta = randomcopypasta()
