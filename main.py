@@ -1,4 +1,3 @@
-from http import client
 import os
 from redditpost import randomcopypasta, randomshitpost
 import discord
