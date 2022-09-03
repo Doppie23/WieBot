@@ -21,6 +21,7 @@ class aclient(discord.Client):
             await tree.sync(guild=guild)
             self.synced=True
         print(f'{self.user} is nu online')
+        await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='You'))
 
 client = aclient()
 tree = app_commands.CommandTree(client)
