@@ -45,7 +45,7 @@ async def on_message(message):
         return
 
         # print(message.content)
-    if message.content.startswith('wie'):
+    if message.content.lower().startswith('wie'):
         user = message.author.id
         await message.channel.send(f"<@{user}> wie vroeg?")
         # print('bericht')
