@@ -3,6 +3,7 @@ from redditpost import randomcopypasta, randomshitpost
 import discord
 from discord import app_commands
 from dotenv import load_dotenv
+from asyncio import sleep
 
 intents = discord.Intents.all()
 
@@ -41,6 +42,42 @@ async def self(interaction: discord.Interaction):
 async def self(interaction: discord.Interaction):
     shitpost = randomshitpost()
     await interaction.response.send_message(shitpost)
+
+@tree.command(name="outro", description="outro", guild=guild)
+async def self(interaction: discord.Interaction):
+    voice_channel = interaction.user.voice.channel
+    channel = None
+    if voice_channel != None:
+        channel = voice_channel.name
+        incall = voice_channel.members
+        vc = await voice_channel.connect()
+        await interaction.response.send_message("speelt nu outro")
+        vc.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source="D:\.onedrive bestanden\creatief\Code\Dsicord bot\wiebot\outro\outro kort.wav"))
+        while vc.is_playing():
+            await sleep(0.1)
+        await vc.disconnect()
+        for member in incall:
+            await member.move_to(None)
+    else:
+        await interaction.response.send_message(str(interaction.user.name), "ziet niet in een spraakkanaal")
+
+@tree.command(name="crabrave", description="Epic traditie", guild=guild)
+async def self(interaction: discord.Interaction):
+    voice_channel = interaction.user.voice.channel
+    channel = None
+    if voice_channel != None:
+        channel = voice_channel.name
+        incall = voice_channel.members
+        vc = await voice_channel.connect()
+        await interaction.response.send_message("speelt nu Crab Rave")
+        vc.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source="D:\.onedrive bestanden\creatief\Code\Dsicord bot\wiebot\outro\crab rave kort.wav"))
+        while vc.is_playing():
+            await sleep(0.1)
+        await vc.disconnect()
+        for member in incall:
+            await member.move_to(None)
+    else:
+        await interaction.response.send_message(str(interaction.user.name), "ziet niet in een spraakkanaal")
 
 @client.event
 async def on_message(message):
