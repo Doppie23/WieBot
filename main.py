@@ -48,7 +48,7 @@ async def self(interaction: discord.Interaction):
         app_commands.Choice(name="Epic Outro", value="outro"),
         ])
 
-@tree.command(name="Outro", description="Epic outro", guild=guild)
+@tree.command(name="outro", description="Epic outro", guild=guild)
 async def self(interaction: discord.Interaction, choices: app_commands.Choice[str]):
     if (choices.value == 'crabrave'):
         source = "D:\.onedrive bestanden\creatief\Code\Dsicord bot\wiebot\outro\crab rave kort.wav"
