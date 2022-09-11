@@ -48,42 +48,32 @@ async def self(interaction: discord.Interaction):
         app_commands.Choice(name="Epic Outro", value="outro"),
         ])
 
-@tree.command(name="debug", description="debug", guild=guild)
+@tree.command(name="Outro", description="Epic outro", guild=guild)
 async def self(interaction: discord.Interaction, choices: app_commands.Choice[str]):
     if (choices.value == 'crabrave'):
-        voice_channel = interaction.user.voice
-        channel = None
-        if voice_channel != None:
-            voice_channel = voice_channel.channel
-            channel = voice_channel.name
-            incall = voice_channel.members
-            vc = await voice_channel.connect()
-            await interaction.response.send_message(":crab:")
-            vc.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source="D:\.onedrive bestanden\creatief\Code\Dsicord bot\wiebot\outro\crab rave kort.wav"))
-            while vc.is_playing():
-                await sleep(0.1)
-            await vc.disconnect()
-            for member in incall:
-                await member.move_to(None)
-        else:
-            await interaction.response.send_message("Join eerst een spraakkanaal.")  
+        source = "D:\.onedrive bestanden\creatief\Code\Dsicord bot\wiebot\outro\crab rave kort.wav"
+        bericht = ":crab:"
+
     elif (choices.value == 'outro'):
-        voice_channel = interaction.user.voice
-        channel = None
-        if voice_channel != None:
-            voice_channel = voice_channel.channel
-            channel = voice_channel.name
-            incall = voice_channel.members
-            vc = await voice_channel.connect()
-            await interaction.response.send_message("SMASH THAT LIKE BUTTON :thumbsup:")
-            vc.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source="D:\.onedrive bestanden\creatief\Code\Dsicord bot\wiebot\outro\outro kort.wav"))
-            while vc.is_playing():
-                await sleep(0.1)
-            await vc.disconnect()
-            for member in incall:
-                await member.move_to(None)
-        else:
-            await interaction.response.send_message("Join eerst een spraakkanaal.")
+        source = "D:\.onedrive bestanden\creatief\Code\Dsicord bot\wiebot\outro\outro kort.wav"
+        bericht = "SMASH THAT LIKE BUTTON :thumbsup:"
+
+    voice_channel = interaction.user.voice
+    channel = None
+    if voice_channel != None:
+        voice_channel = voice_channel.channel
+        channel = voice_channel.name
+        incall = voice_channel.members
+        vc = await voice_channel.connect()
+        await interaction.response.send_message(bericht)
+        vc.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=source))
+        while vc.is_playing():
+            await sleep(0.1)
+        await vc.disconnect()
+        for member in incall:
+            await member.move_to(None)
+    else:
+        await interaction.response.send_message("Join eerst een spraakkanaal.")  
 
 @client.event
 async def on_message(message):
