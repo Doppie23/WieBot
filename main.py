@@ -49,13 +49,15 @@ async def self(interaction: discord.Interaction):
         ])
 
 @tree.command(name="outro", description="Epic outro", guild=guild)
-async def self(interaction: discord.Interaction, choices: app_commands.Choice[str]):
+async def self(interaction: discord.Interaction, choices: app_commands.Choice[str]):   
     if (choices.value == 'crabrave'):
-        source = "D:\.onedrive bestanden\creatief\Code\Dsicord bot\wiebot\outro\crab rave kort.wav"
+        file = '\outro\crab rave kort.wav'
+        source = os.getcwd()+file
         bericht = ":crab:"
 
     elif (choices.value == 'outro'):
-        source = "D:\.onedrive bestanden\creatief\Code\Dsicord bot\wiebot\outro\outro kort.wav"
+        file = '\outro\outro kort.wav'
+        source = os.getcwd()+file
         bericht = "SMASH THAT LIKE BUTTON :thumbsup:"
 
     voice_channel = interaction.user.voice
