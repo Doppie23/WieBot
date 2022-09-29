@@ -68,6 +68,10 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         incall = voice_channel.members
         vc = await voice_channel.connect()
         await interaction.response.send_message(bericht)
+        if file == '\outro\outro kort.wav':
+            original_message = await interaction.original_response()
+            await discord.InteractionMessage.add_reaction(original_message, "👍")
+            await discord.InteractionMessage.add_reaction(original_message, "👎")
         vc.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=source))
         while vc.is_playing():
             await sleep(0.1)
@@ -75,8 +79,32 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         for member in incall:
             await member.move_to(None)
     else:
-        await interaction.response.send_message("Join eerst een spraakkanaal.")  
+        await interaction.response.send_message("Join eerst een spraakkanaal.")
 
+@tree.command(name="vrienden", description="!vrienden", guild=guild)
+async def self(interaction: discord.Interaction):
+    voice_channel = interaction.user.voice
+    channel = None
+    if voice_channel != None:
+        voice_channel = voice_channel.channel
+        channel = voice_channel.name
+        incall = voice_channel.members
+        vc = await voice_channel.connect()
+        await interaction.response.send_message(f'{voice_channel} gejoind', ephemeral=True)
+    else:
+        await interaction.response.send_message("Join eerst een spraakkanaal.", ephemeral=True)
+
+@tree.command(name="leave", description="leave call", guild=guild)
+async def self(interaction: discord.Interaction):
+    voice_channel = interaction.user.voice
+    channel = None
+    if voice_channel != None:
+        voice_channel = voice_channel.channel
+        await interaction.guild.voice_client.disconnect()
+        await interaction.response.send_message(':wave:', ephemeral=True)
+    else:
+        await interaction.response.send_message("Join eerst een spraakkanaal.", ephemeral=True)
+        
 @client.event
 async def on_message(message):
     if message.author == client.user:
