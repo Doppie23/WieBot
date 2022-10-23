@@ -4,6 +4,8 @@ import discord
 from discord import app_commands
 from dotenv import load_dotenv
 from asyncio import sleep
+from datetime import datetime, timedelta
+import json
 
 intents = discord.Intents.all()
 
@@ -116,5 +118,58 @@ async def on_message(message):
         user = message.author.id
         await message.channel.send(f"<@{user}> wie vroeg?")
         # print('bericht')
+
+@client.event
+async def on_voice_state_update(member, before, after):
+    print(after.channel)
+    if after.channel != None:
+        f = open('calltimer\data.json')
+        data = json.load(f)
+
+        starttijd = str(datetime.now())
+        data[str(member.id)] = {'starttijd': starttijd, 'kanaal': str(after.channel)}
+
+        with open('calltimer\data.json', 'w') as f:
+            json.dump(data, f)
+
+        f.close()
+
+    elif after.channel == None:
+        f = open('calltimer\data.json')
+        data = json.load(f)
+
+        eindtijd = datetime.now()
+
+        starttijd = datetime.strptime(data[str(member.id)]['starttijd'], '%Y-%m-%d %H:%M:%S.%f')
+        kanaal = data[str(member.id)]['kanaal']
+
+        tijd_in_call = eindtijd - starttijd
+        f.close()
+
+        channel = client.get_channel(690215022961754121)
+        await channel.send(f'<@{member.id}> zat {tijd_in_call} in {kanaal}')
+
+        f = open('calltimer\leaderboard.json')
+        leaderboard = json.load(f)
+
+        try:
+            oudetijd = datetime.strptime(leaderboard[str(before.channel)]['tijd'], '%H:%M:%S.%f')
+            print(oudetijd)
+            nieuwetijd = datetime.strptime(str(tijd_in_call), '%H:%M:%S.%f')
+
+            if (oudetijd < nieuwetijd) == True:
+                print('betere tijd')
+                leaderboard[str(before.channel)] = {'tijd': str(tijd_in_call), 'member': str(member.id)}
+                with open('calltimer\leaderboard.json', 'w') as f:
+                    json.dump(leaderboard, f)
+                f.close()
+            else:
+                print('geen beter tijd')
+
+        except KeyError:
+            leaderboard[str(before.channel)] = {'tijd': str(tijd_in_call), 'member': str(member.id)}
+            with open('calltimer\leaderboard.json', 'w') as f:
+                json.dump(leaderboard, f)
+            f.close()
 
 client.run(TOKEN)
