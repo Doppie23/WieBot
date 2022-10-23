@@ -1,5 +1,5 @@
 .env
 praw.ini
 __pycache__/
-data.json
-leaderboard.json
+calltimer/data.json
+calltimer/leaderboard.json
