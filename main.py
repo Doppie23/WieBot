@@ -106,6 +106,18 @@ async def self(interaction: discord.Interaction):
         await interaction.response.send_message(':wave:', ephemeral=True)
     else:
         await interaction.response.send_message("Join eerst een spraakkanaal.", ephemeral=True)
+
+@tree.command(name="leaderboard", description="leaderboard van wie het langst in elke call heeft gezeten", guild=guild)
+async def self(interaction: discord.Interaction, kanaal: str):
+    f = open('calltimer\leaderboard.json')
+    data = json.load(f)
+    try:
+        tijd = data[str(kanaal).lower()]['tijd']
+        memberid = data[str(kanaal).lower()]['member']
+        await interaction.response.send_message(f"De persoon die het langst in {kanaal} heeft gezeten is <@{memberid}> met een tijd van: {tijd}")
+    except KeyError:
+        await interaction.response.send_message(f"Het kanaal {kanaal} heeft nog geen beste tijd.")
+    
         
 @client.event
 async def on_message(message):
@@ -146,20 +158,20 @@ async def on_voice_state_update(member, before, after):
         tijd_in_call = eindtijd - starttijd
         f.close()
 
-        channel = client.get_channel(690215022961754121)
+        channel = client.get_channel(1033786185719500850)
         await channel.send(f'<@{member.id}> zat {tijd_in_call} in {kanaal}')
 
         f = open('calltimer\leaderboard.json')
         leaderboard = json.load(f)
 
         try:
-            oudetijd = datetime.strptime(leaderboard[str(before.channel)]['tijd'], '%H:%M:%S.%f')
+            oudetijd = datetime.strptime(leaderboard[str(before.channel).lower()]['tijd'], '%H:%M:%S.%f')
             print(oudetijd)
             nieuwetijd = datetime.strptime(str(tijd_in_call), '%H:%M:%S.%f')
 
             if (oudetijd < nieuwetijd) == True:
                 print('betere tijd')
-                leaderboard[str(before.channel)] = {'tijd': str(tijd_in_call), 'member': str(member.id)}
+                leaderboard[str(before.channel).lower()] = {'tijd': str(tijd_in_call), 'member': str(member.id)}
                 with open('calltimer\leaderboard.json', 'w') as f:
                     json.dump(leaderboard, f)
                 f.close()
@@ -167,7 +179,7 @@ async def on_voice_state_update(member, before, after):
                 print('geen beter tijd')
 
         except KeyError:
-            leaderboard[str(before.channel)] = {'tijd': str(tijd_in_call), 'member': str(member.id)}
+            leaderboard[str(before.channel).lower()] = {'tijd': str(tijd_in_call), 'member': str(member.id)}
             with open('calltimer\leaderboard.json', 'w') as f:
                 json.dump(leaderboard, f)
             f.close()
