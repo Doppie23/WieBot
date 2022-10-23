@@ -1,4 +1,4 @@
 .env
 praw.ini
 __pycache__/
-*.json
+!calltimer/*.json
