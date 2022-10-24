@@ -156,22 +156,23 @@ async def on_voice_state_update(member, before, after):
         kanaal = data[str(member.id)]['kanaal']
 
         tijd_in_call = eindtijd - starttijd
+        minutenincall = int(tijd_in_call.total_seconds()/60)
         f.close()
 
         channel = client.get_channel(1033786185719500850)
-        await channel.send(f'<@{member.id}> zat {tijd_in_call} in {kanaal}')
+        await channel.send(f'<@{member.id}> zat {minutenincall} minuten in {kanaal}')
 
         f = open('calltimer\leaderboard.json')
         leaderboard = json.load(f)
 
         try:
-            oudetijd = datetime.strptime(leaderboard[str(before.channel).lower()]['tijd'], '%H:%M:%S.%f')
+            oudetijd = int(leaderboard[str(before.channel).lower()]['tijd'])
             print(oudetijd)
-            nieuwetijd = datetime.strptime(str(tijd_in_call), '%H:%M:%S.%f')
+            nieuwetijd = minutenincall
 
-            if (oudetijd < nieuwetijd) == True:
+            if nieuwetijd > oudetijd:
                 print('betere tijd')
-                leaderboard[str(before.channel).lower()] = {'tijd': str(tijd_in_call), 'member': str(member.id)}
+                leaderboard[str(before.channel).lower()] = {'tijd': str(minutenincall), 'member': str(member.id)}
                 with open('calltimer\leaderboard.json', 'w') as f:
                     json.dump(leaderboard, f)
                 f.close()
@@ -179,7 +180,7 @@ async def on_voice_state_update(member, before, after):
                 print('geen beter tijd')
 
         except KeyError:
-            leaderboard[str(before.channel).lower()] = {'tijd': str(tijd_in_call), 'member': str(member.id)}
+            leaderboard[str(before.channel).lower()] = {'tijd': str(minutenincall), 'member': str(member.id)}
             with open('calltimer\leaderboard.json', 'w') as f:
                 json.dump(leaderboard, f)
             f.close()
