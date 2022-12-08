@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 from dotenv import load_dotenv
 from asyncio import sleep
+import asyncio
 from datetime import datetime, timedelta
 import json
 
@@ -78,10 +79,16 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         while vc.is_playing():
             await sleep(0.1)
         await vc.disconnect()
-        for member in incall:
-            await member.move_to(None)
+
+        await asyncio.wait([
+        asyncio.create_task(kick(incall[i]))
+        for i in range(len(incall))
+        ])
     else:
         await interaction.response.send_message("Join eerst een spraakkanaal.")
+
+async def kick(member):
+    await member.move_to(None)
 
 @tree.command(name="vrienden", description="!vrienden", guild=guild)
 async def self(interaction: discord.Interaction):
