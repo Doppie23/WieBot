@@ -1,4 +1,6 @@
 import os
+import random
+import re
 from redditpost import randomcopypasta, randomshitpost
 import discord
 from discord import app_commands
@@ -125,7 +127,54 @@ async def self(interaction: discord.Interaction, kanaal: str):
     except KeyError:
         await interaction.response.send_message(f"Het kanaal {kanaal} heeft nog geen beste tijd.")
     
-        
+@tree.command(name="noep", description="!noep", guild=guild)
+async def self(interaction: discord.Interaction):
+    f = open(r'noeps\noep.json')
+    noeps = json.load(f)
+    clip, user_vote = random.choice(list(noeps.items()))
+    user = user_vote[1]
+    vote = user_vote[0]
+    await interaction.response.send_message(f'gerbuiker: {user}, {vote} {clip}')
+    original_message = await interaction.original_response()
+    await discord.InteractionMessage.add_reaction(original_message, "🇱")
+    f.close()
+
+@tree.command(name="grootste-noep", description="De grootste noep van iedereen.", guild=guild)
+async def self(interaction: discord.Interaction):
+    with open(r'noeps\noep.json') as f:
+        alles = []
+        data = json.load(f)
+        for i in data:
+            getal = data[i]
+            alles.append([data, getal])
+    alles.sort(reverse=True)
+    user = alles[0][1]
+    hoevaak = alles[0][0]
+    await interaction.response.send_message(f'gerbuiker: {user}, {hoevaak}')
+    
+
+
+@client.event
+async def on_raw_reaction_add(payload):
+    if client.user.id == payload.user_id:
+        return
+    if payload.emoji.name == "🇱":
+        # print(payload)
+        channel_id = payload.channel_id
+        msg_id = payload.message_id
+        channel = client.get_channel(channel_id)
+        msg = await channel.fetch_message(msg_id)
+        if msg.author == client.user:
+            msg_content = msg.content
+            link = re.search("(?P<url>https?://[^\s]+)", msg_content).group("url")
+            with open(r'noeps\noep.json') as f:
+                data = json.load(f)
+            data[link][0] += 1
+            with open(r'noeps\noep.json', 'w') as f:
+                json.dump(data, f, indent=4)            
+    else:
+        return
+
 @client.event
 async def on_message(message):
     if message.author == client.user:
