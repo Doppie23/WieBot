@@ -9,6 +9,7 @@ from asyncio import sleep
 import asyncio
 from datetime import datetime, timedelta
 import json
+from func import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls
 
 intents = discord.Intents.all()
 
@@ -77,7 +78,7 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
             original_message = await interaction.original_response()
             await discord.InteractionMessage.add_reaction(original_message, "👍")
             await discord.InteractionMessage.add_reaction(original_message, "👎")
-        vc.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe", source=source))
+        vc.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=source))
         while vc.is_playing():
             await sleep(0.1)
         await vc.disconnect()
@@ -134,7 +135,8 @@ async def self(interaction: discord.Interaction):
     clip, user_vote = random.choice(list(noeps.items()))
     user = user_vote[1]
     vote = user_vote[0]
-    await interaction.response.send_message(f"{user} heeft al {vote} L's gepakt met deze clip: {clip}")
+    totaal_l = totaal_user(str(user))
+    await interaction.response.send_message(f"{user} heeft al {vote} L's gepakt met deze clip. In totaal heeft {user} al {totaal_l} L's gepakt. {clip}")
     original_message = await interaction.original_response()
     await discord.InteractionMessage.add_reaction(original_message, "🇱")
     f.close()
@@ -165,19 +167,37 @@ async def self(interaction: discord.Interaction):
         userdrie = data[nopesdrie][1]
         hoevaakdrie = data[nopesdrie][0]
 
-    usereenid = usereen[2:-1]
-    usertweeid = usertwee[2:-1]
-    userdrieid = userdrie[2:-1]
+
+    meeste_l_list, meeste_l_list_gebruiker = meeste_ls()
+
+    meeste_ls_een = meeste_l_list[0]
+    meeste_ls_twee = meeste_l_list[1]
+    meeste_ls_drie = meeste_l_list[2]
+
+    meeste_ls_een_gebruiker = meeste_l_list_gebruiker[0]
+    meeste_ls_twee_gebruiker = meeste_l_list_gebruiker[1]
+    meeste_ls_drie_gebruiker = meeste_l_list_gebruiker[2]
+
+
+    clip_een, ls_clip_een = clip_van_gebruiker_met_meeste_ls(meeste_ls_een_gebruiker)
+    clip_twee, ls_clip_twee = clip_van_gebruiker_met_meeste_ls(meeste_ls_twee_gebruiker)
+    clip_drie, ls_clip_drie = clip_van_gebruiker_met_meeste_ls(meeste_ls_drie_gebruiker)
+
+
+
+    usereenid = meeste_ls_een_gebruiker[2:-1]
+    usertweeid = meeste_ls_twee_gebruiker[2:-1]
+    userdrieid = meeste_ls_drie_gebruiker[2:-1]
 
     usereenob = client.get_user(int(usereenid))
     usertweeob = client.get_user(int(usertweeid))
-    userdrieob = client.get_user(int(userdrieid))    
+    userdrieob = client.get_user(int(userdrieid))  
 
     embed = discord.Embed(title='De grootste noeps', color=discord.Colour.random())
     embed.set_thumbnail(url=usereenob.avatar)
-    embed.add_field(name=f"1: {usereenob.display_name} met {hoevaakeen} L's voor deze clip:", value=meestenoeps, inline=False)
-    embed.add_field(name=f"2: {usertweeob.display_name} met {hoevaaktwee} L's voor deze clip:", value=noepstwee, inline=False)
-    embed.add_field(name=f"3: {userdrieob.display_name} met {hoevaakdrie} L's voor deze clip:", value=nopesdrie, inline=False)
+    embed.add_field(name=f"1: {usereenob.display_name} met {meeste_ls_een} L's in totaal", value=f"De clip met de meeste L's ({ls_clip_een}) is: {clip_een}", inline=False)
+    embed.add_field(name=f"2: {usertweeob.display_name} met {meeste_ls_twee} L's in totaal", value=f"De clip met de meeste L's ({ls_clip_twee}) is: {clip_twee}", inline=False)
+    embed.add_field(name=f"3: {userdrieob.display_name} met {meeste_ls_drie} L's in totaal", value=f"De clip met de meeste L's ({ls_clip_drie}) is: {clip_drie}", inline=False)
 
     await interaction.response.send_message(embed=embed)
 
