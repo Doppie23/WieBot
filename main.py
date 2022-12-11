@@ -134,12 +134,12 @@ async def self(interaction: discord.Interaction):
     clip, user_vote = random.choice(list(noeps.items()))
     user = user_vote[1]
     vote = user_vote[0]
-    await interaction.response.send_message(f'gerbuiker: {user}, {vote} {clip}')
+    await interaction.response.send_message(f"{user} heeft al {vote} L's gepakt met deze clip: {clip}")
     original_message = await interaction.original_response()
     await discord.InteractionMessage.add_reaction(original_message, "🇱")
     f.close()
 
-@tree.command(name="grootste-noep", description="De grootste noep van iedereen.", guild=guild)
+@tree.command(name="grootste-noep", description="De grootste noeps van iedereen.", guild=guild)
 async def self(interaction: discord.Interaction):
     with open(r'noeps\noep.json') as f:
         waardes = []
@@ -165,13 +165,22 @@ async def self(interaction: discord.Interaction):
         userdrie = data[nopesdrie][1]
         hoevaakdrie = data[nopesdrie][0]
 
+    usereenid = usereen[2:-1]
+    usertweeid = usertwee[2:-1]
+    userdrieid = userdrie[2:-1]
+
+    usereenob = client.get_user(int(usereenid))
+    usertweeob = client.get_user(int(usertweeid))
+    userdrieob = client.get_user(int(userdrieid))    
+
     embed = discord.Embed(title='De grootste noeps', color=discord.Colour.random())
-    embed.add_field(name=f"1: {usereen} met {hoevaakeen} L's", value=meestenoeps, inline=False)
-    embed.add_field(name=f"2: {usertwee} met {hoevaaktwee} L's", value=noepstwee, inline=False)
-    embed.add_field(name=f"3: {userdrie} met {hoevaakdrie} L's", value=nopesdrie, inline=False)
+    embed.set_thumbnail(url=usereenob.avatar)
+    embed.add_field(name=f"1: {usereenob.display_name} met {hoevaakeen} L's", value=meestenoeps, inline=False)
+    embed.add_field(name=f"2: {usertweeob.display_name} met {hoevaaktwee} L's", value=noepstwee, inline=False)
+    embed.add_field(name=f"3: {userdrieob.display_name} met {hoevaakdrie} L's", value=nopesdrie, inline=False)
 
     await interaction.response.send_message(embed=embed)
-    
+
 @client.event
 async def on_raw_reaction_add(payload):
     if client.user.id == payload.user_id:
