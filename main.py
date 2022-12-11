@@ -142,18 +142,36 @@ async def self(interaction: discord.Interaction):
 @tree.command(name="grootste-noep", description="De grootste noep van iedereen.", guild=guild)
 async def self(interaction: discord.Interaction):
     with open(r'noeps\noep.json') as f:
-        alles = []
+        waardes = []
+        link = []
         data = json.load(f)
         for i in data:
-            getal = data[i]
-            alles.append([data, getal])
-    alles.sort(reverse=True)
-    user = alles[0][1]
-    hoevaak = alles[0][0]
-    await interaction.response.send_message(f'gerbuiker: {user}, {hoevaak}')
+            getal = data[i][0]
+            waardes.append(getal)
+            link.append(i)
+    waardes_sorted, links_sorted = (list(t) for t in zip(*sorted(zip(waardes, link), reverse=True)))
+    meestenoeps = links_sorted[0]
+    noepstwee = links_sorted[1]
+    nopesdrie = links_sorted[2]
+    with open(r'noeps\noep.json') as f:
+        data = json.load(f)
+
+        usereen = data[meestenoeps][1]
+        hoevaakeen = data[meestenoeps][0]
+
+        usertwee = data[noepstwee][1]
+        hoevaaktwee = data[noepstwee][0]
+
+        userdrie = data[nopesdrie][1]
+        hoevaakdrie = data[nopesdrie][0]
+
+    embed = discord.Embed(title='De grootste noeps', color=discord.Colour.random())
+    embed.add_field(name=f"1: {usereen} met {hoevaakeen} L's", value=meestenoeps, inline=False)
+    embed.add_field(name=f"2: {usertwee} met {hoevaaktwee} L's", value=noepstwee, inline=False)
+    embed.add_field(name=f"3: {userdrie} met {hoevaakdrie} L's", value=nopesdrie, inline=False)
+
+    await interaction.response.send_message(embed=embed)
     
-
-
 @client.event
 async def on_raw_reaction_add(payload):
     if client.user.id == payload.user_id:
