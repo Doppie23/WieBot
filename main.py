@@ -56,12 +56,12 @@ async def self(interaction: discord.Interaction):
 @tree.command(name="outro", description="Epic outro", guild=guild)
 async def self(interaction: discord.Interaction, choices: app_commands.Choice[str]):   
     if (choices.value == 'crabrave'):
-        file = '\outro\crab rave kort.wav'
+        file = '/outro/crab rave kort.wav'
         source = os.getcwd()+file
         bericht = ":crab:"
 
     elif (choices.value == 'outro'):
-        file = '\outro\outro kort.wav'
+        file = '/outro/outro kort.wav'
         source = os.getcwd()+file
         bericht = "SMASH THAT LIKE BUTTON :thumbsup:"
 
@@ -73,7 +73,7 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         incall = voice_channel.members
         vc = await voice_channel.connect()
         await interaction.response.send_message(bericht)
-        if file == '\outro\outro kort.wav':
+        if file == '/outro/outro kort.wav':
             original_message = await interaction.original_response()
             await discord.InteractionMessage.add_reaction(original_message, "👍")
             await discord.InteractionMessage.add_reaction(original_message, "👎")
@@ -118,7 +118,7 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name="leaderboard", description="leaderboard van wie het langst in elke call heeft gezeten", guild=guild)
 async def self(interaction: discord.Interaction, kanaal: str):
-    f = open('calltimer\leaderboard.json')
+    f = open('calltimer/leaderboard.json')
     data = json.load(f)
     try:
         tijd = data[str(kanaal).lower()]['tijd']
@@ -129,7 +129,7 @@ async def self(interaction: discord.Interaction, kanaal: str):
     
 @tree.command(name="noep", description="!noep", guild=guild)
 async def self(interaction: discord.Interaction):
-    f = open(r'noeps\noep.json')
+    f = open(r'noeps/noep.json')
     noeps = json.load(f)
     clip, user_vote = random.choice(list(noeps.items()))
     user = user_vote[1]
@@ -141,7 +141,7 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name="grootste-noep", description="De grootste noeps van iedereen.", guild=guild)
 async def self(interaction: discord.Interaction):
-    with open(r'noeps\noep.json') as f:
+    with open(r'noeps/noep.json') as f:
         waardes = []
         link = []
         data = json.load(f)
@@ -153,7 +153,7 @@ async def self(interaction: discord.Interaction):
     meestenoeps = links_sorted[0]
     noepstwee = links_sorted[1]
     nopesdrie = links_sorted[2]
-    with open(r'noeps\noep.json') as f:
+    with open(r'noeps/noep.json') as f:
         data = json.load(f)
 
         usereen = data[meestenoeps][1]
@@ -175,9 +175,9 @@ async def self(interaction: discord.Interaction):
 
     embed = discord.Embed(title='De grootste noeps', color=discord.Colour.random())
     embed.set_thumbnail(url=usereenob.avatar)
-    embed.add_field(name=f"1: {usereenob.display_name} met {hoevaakeen} L's", value=meestenoeps, inline=False)
-    embed.add_field(name=f"2: {usertweeob.display_name} met {hoevaaktwee} L's", value=noepstwee, inline=False)
-    embed.add_field(name=f"3: {userdrieob.display_name} met {hoevaakdrie} L's", value=nopesdrie, inline=False)
+    embed.add_field(name=f"1: {usereenob.display_name} met {hoevaakeen} L's voor deze clip:", value=meestenoeps, inline=False)
+    embed.add_field(name=f"2: {usertweeob.display_name} met {hoevaaktwee} L's voor deze clip:", value=noepstwee, inline=False)
+    embed.add_field(name=f"3: {userdrieob.display_name} met {hoevaakdrie} L's voor deze clip:", value=nopesdrie, inline=False)
 
     await interaction.response.send_message(embed=embed)
 
@@ -194,10 +194,33 @@ async def on_raw_reaction_add(payload):
         if msg.author == client.user:
             msg_content = msg.content
             link = re.search("(?P<url>https?://[^\s]+)", msg_content).group("url")
-            with open(r'noeps\noep.json') as f:
+            with open(r'noeps/noep.json') as f:
                 data = json.load(f)
             data[link][0] += 1
-            with open(r'noeps\noep.json', 'w') as f:
+            print(f'+1 vote voor {link}')
+            with open(r'noeps/noep.json', 'w') as f:
+                json.dump(data, f, indent=4)            
+    else:
+        return
+
+@client.event
+async def on_raw_reaction_remove(payload):
+    if client.user.id == payload.user_id:
+        return
+    if payload.emoji.name == "🇱":
+        # print(payload)
+        channel_id = payload.channel_id
+        msg_id = payload.message_id
+        channel = client.get_channel(channel_id)
+        msg = await channel.fetch_message(msg_id)
+        if msg.author == client.user:
+            msg_content = msg.content
+            link = re.search("(?P<url>https?://[^\s]+)", msg_content).group("url")
+            with open(r'noeps/noep.json') as f:
+                data = json.load(f)
+            data[link][0] -= 1
+            print(f'-1 vote voor {link}')
+            with open(r'noeps/noep.json', 'w') as f:
                 json.dump(data, f, indent=4)            
     else:
         return
@@ -218,19 +241,19 @@ async def on_message(message):
 async def on_voice_state_update(member, before, after):
     print(after.channel)
     if after.channel != None:
-        f = open('calltimer\data.json')
+        f = open('calltimer/data.json')
         data = json.load(f)
 
         starttijd = str(datetime.now())
         data[str(member.id)] = {'starttijd': starttijd, 'kanaal': str(after.channel)}
 
-        with open('calltimer\data.json', 'w') as f:
+        with open('calltimer/data.json', 'w') as f:
             json.dump(data, f)
 
         f.close()
 
     elif after.channel == None:
-        f = open('calltimer\data.json')
+        f = open('calltimer/data.json')
         data = json.load(f)
 
         eindtijd = datetime.now()
@@ -245,7 +268,7 @@ async def on_voice_state_update(member, before, after):
         channel = client.get_channel(1033786185719500850)
         await channel.send(f'<@{member.id}> zat {minutenincall} minuten in {kanaal}')
 
-        f = open('calltimer\leaderboard.json')
+        f = open('calltimer/leaderboard.json')
         leaderboard = json.load(f)
 
         try:
@@ -256,7 +279,7 @@ async def on_voice_state_update(member, before, after):
             if nieuwetijd > oudetijd:
                 print('betere tijd')
                 leaderboard[str(before.channel).lower()] = {'tijd': str(minutenincall), 'member': str(member.id)}
-                with open('calltimer\leaderboard.json', 'w') as f:
+                with open('calltimer/leaderboard.json', 'w') as f:
                     json.dump(leaderboard, f)
                 f.close()
             else:
@@ -264,7 +287,7 @@ async def on_voice_state_update(member, before, after):
 
         except KeyError:
             leaderboard[str(before.channel).lower()] = {'tijd': str(minutenincall), 'member': str(member.id)}
-            with open('calltimer\leaderboard.json', 'w') as f:
+            with open('calltimer/leaderboard.json', 'w') as f:
                 json.dump(leaderboard, f)
             f.close()
 
