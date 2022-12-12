@@ -143,61 +143,18 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name="grootste-noep", description="De grootste noeps van iedereen.", guild=guild)
 async def self(interaction: discord.Interaction):
-    with open(r'noeps/noep.json') as f:
-        waardes = []
-        link = []
-        data = json.load(f)
-        for i in data:
-            getal = data[i][0]
-            waardes.append(getal)
-            link.append(i)
-    waardes_sorted, links_sorted = (list(t) for t in zip(*sorted(zip(waardes, link), reverse=True)))
-    meestenoeps = links_sorted[0]
-    noepstwee = links_sorted[1]
-    nopesdrie = links_sorted[2]
-    with open(r'noeps/noep.json') as f:
-        data = json.load(f)
-
-        usereen = data[meestenoeps][1]
-        hoevaakeen = data[meestenoeps][0]
-
-        usertwee = data[noepstwee][1]
-        hoevaaktwee = data[noepstwee][0]
-
-        userdrie = data[nopesdrie][1]
-        hoevaakdrie = data[nopesdrie][0]
-
-
-    meeste_l_list, meeste_l_list_gebruiker = meeste_ls()
-
-    meeste_ls_een = meeste_l_list[0]
-    meeste_ls_twee = meeste_l_list[1]
-    meeste_ls_drie = meeste_l_list[2]
-
-    meeste_ls_een_gebruiker = meeste_l_list_gebruiker[0]
-    meeste_ls_twee_gebruiker = meeste_l_list_gebruiker[1]
-    meeste_ls_drie_gebruiker = meeste_l_list_gebruiker[2]
-
-
-    clip_een, ls_clip_een = clip_van_gebruiker_met_meeste_ls(meeste_ls_een_gebruiker)
-    clip_twee, ls_clip_twee = clip_van_gebruiker_met_meeste_ls(meeste_ls_twee_gebruiker)
-    clip_drie, ls_clip_drie = clip_van_gebruiker_met_meeste_ls(meeste_ls_drie_gebruiker)
-
-
-
-    usereenid = meeste_ls_een_gebruiker[2:-1]
-    usertweeid = meeste_ls_twee_gebruiker[2:-1]
-    userdrieid = meeste_ls_drie_gebruiker[2:-1]
-
-    usereenob = client.get_user(int(usereenid))
-    usertweeob = client.get_user(int(usertweeid))
-    userdrieob = client.get_user(int(userdrieid))  
-
     embed = discord.Embed(title='De grootste noeps', color=discord.Colour.random())
-    embed.set_thumbnail(url=usereenob.avatar)
-    embed.add_field(name=f"1: {usereenob.display_name} met {meeste_ls_een} L's in totaal", value=f"De clip met de meeste L's ({ls_clip_een}) is: {clip_een}", inline=False)
-    embed.add_field(name=f"2: {usertweeob.display_name} met {meeste_ls_twee} L's in totaal", value=f"De clip met de meeste L's ({ls_clip_twee}) is: {clip_twee}", inline=False)
-    embed.add_field(name=f"3: {userdrieob.display_name} met {meeste_ls_drie} L's in totaal", value=f"De clip met de meeste L's ({ls_clip_drie}) is: {clip_drie}", inline=False)
+    meeste_l_list, meeste_l_list_gebruiker = meeste_ls()
+    for i in range(3):
+        totaal_ls = meeste_l_list[i]
+        totaal_ls_gebruiker = meeste_l_list_gebruiker[i]
+        clip, ls_clip = clip_van_gebruiker_met_meeste_ls(totaal_ls_gebruiker)
+        userid = totaal_ls_gebruiker[2:-1]
+        userob = client.get_user(int(userid))
+        if i == 0:
+            embed.set_thumbnail(url=userob.avatar)
+        nummer = i+1
+        embed.add_field(name=f"{nummer}: {userob.display_name} met {totaal_ls} L's in totaal", value=f"De clip met de meeste L's ({ls_clip}) is: {clip}", inline=False)
 
     await interaction.response.send_message(embed=embed)
 
