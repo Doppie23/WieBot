@@ -108,25 +108,23 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name="leave", description="leave call", guild=guild)
 async def self(interaction: discord.Interaction):
-    voice_channel = interaction.user.voice
-    channel = None
-    if voice_channel != None:
-        voice_channel = voice_channel.channel
-        await interaction.guild.voice_client.disconnect()
+    voice_channel = interaction.guild.voice_client
+    if voice_channel != None or voice_channel.is_connected():
+        await voice_channel.disconnect()
         await interaction.response.send_message(':wave:', ephemeral=True)
     else:
-        await interaction.response.send_message("Join eerst een spraakkanaal.", ephemeral=True)
+        await interaction.response.send_message("Bot zit niet in een kanaal.", ephemeral=True)
 
-@tree.command(name="leaderboard", description="leaderboard van wie het langst in elke call heeft gezeten", guild=guild)
-async def self(interaction: discord.Interaction, kanaal: str):
-    f = open('calltimer/leaderboard.json')
-    data = json.load(f)
-    try:
-        tijd = data[str(kanaal).lower()]['tijd']
-        memberid = data[str(kanaal).lower()]['member']
-        await interaction.response.send_message(f"De persoon die het langst in {kanaal} heeft gezeten is <@{memberid}> met een tijd van: {tijd}")
-    except KeyError:
-        await interaction.response.send_message(f"Het kanaal {kanaal} heeft nog geen beste tijd.")
+# @tree.command(name="leaderboard", description="leaderboard van wie het langst in elke call heeft gezeten", guild=guild)
+# async def self(interaction: discord.Interaction, kanaal: str):
+#     f = open('calltimer/leaderboard.json')
+#     data = json.load(f)
+#     try:
+#         tijd = data[str(kanaal).lower()]['tijd']
+#         memberid = data[str(kanaal).lower()]['member']
+#         await interaction.response.send_message(f"De persoon die het langst in {kanaal} heeft gezeten is <@{memberid}> met een tijd van: {tijd}")
+#     except KeyError:
+#         await interaction.response.send_message(f"Het kanaal {kanaal} heeft nog geen beste tijd.")
     
 @tree.command(name="noep", description="!noep", guild=guild)
 async def self(interaction: discord.Interaction):
@@ -158,6 +156,12 @@ async def self(interaction: discord.Interaction):
 
     await interaction.response.send_message(embed=embed)
 
+@tree.command(name="say", description="zeg iets als wiebot", guild=guild)
+async def self(interaction: discord.Interaction, say: str):
+    await interaction.response.send_message(f"Bericht: {say}", ephemeral=True)
+    channel = interaction.channel
+    await channel.send(say)
+
 @client.event
 async def on_raw_reaction_add(payload):
     if client.user.id == payload.user_id:
@@ -181,7 +185,7 @@ async def on_raw_reaction_add(payload):
         return
 
 @client.event
-async def on_raw_reaction_remove(payload):
+async def on_raw_reaction_remove(payload: discord.Reaction):
     if client.user.id == payload.user_id:
         return
     if payload.emoji.name == "🇱":
@@ -203,7 +207,7 @@ async def on_raw_reaction_remove(payload):
         return
 
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     if message.author == client.user:
         # print('eigen bericht')
         return
@@ -214,58 +218,58 @@ async def on_message(message):
         await message.channel.send(f"<@{user}> wie vroeg?")
         # print('bericht')
 
-@client.event
-async def on_voice_state_update(member, before, after):
-    print(after.channel)
-    if after.channel != None:
-        f = open('calltimer/data.json')
-        data = json.load(f)
+# @client.event
+# async def on_voice_state_update(member, before, after):
+#     print(after.channel)
+#     if after.channel != None:
+#         f = open('calltimer/data.json')
+#         data = json.load(f)
 
-        starttijd = str(datetime.now())
-        data[str(member.id)] = {'starttijd': starttijd, 'kanaal': str(after.channel)}
+#         starttijd = str(datetime.now())
+#         data[str(member.id)] = {'starttijd': starttijd, 'kanaal': str(after.channel)}
 
-        with open('calltimer/data.json', 'w') as f:
-            json.dump(data, f)
+#         with open('calltimer/data.json', 'w') as f:
+#             json.dump(data, f)
 
-        f.close()
+#         f.close()
 
-    elif after.channel == None:
-        f = open('calltimer/data.json')
-        data = json.load(f)
+#     elif after.channel == None:
+#         f = open('calltimer/data.json')
+#         data = json.load(f)
 
-        eindtijd = datetime.now()
+#         eindtijd = datetime.now()
 
-        starttijd = datetime.strptime(data[str(member.id)]['starttijd'], '%Y-%m-%d %H:%M:%S.%f')
-        kanaal = data[str(member.id)]['kanaal']
+#         starttijd = datetime.strptime(data[str(member.id)]['starttijd'], '%Y-%m-%d %H:%M:%S.%f')
+#         kanaal = data[str(member.id)]['kanaal']
 
-        tijd_in_call = eindtijd - starttijd
-        minutenincall = int(tijd_in_call.total_seconds()/60)
-        f.close()
+#         tijd_in_call = eindtijd - starttijd
+#         minutenincall = int(tijd_in_call.total_seconds()/60)
+#         f.close()
 
-        channel = client.get_channel(1033786185719500850)
-        await channel.send(f'<@{member.id}> zat {minutenincall} minuten in {kanaal}')
+#         channel = client.get_channel(1033786185719500850)
+#         await channel.send(f'<@{member.id}> zat {minutenincall} minuten in {kanaal}')
 
-        f = open('calltimer/leaderboard.json')
-        leaderboard = json.load(f)
+#         f = open('calltimer/leaderboard.json')
+#         leaderboard = json.load(f)
 
-        try:
-            oudetijd = int(leaderboard[str(before.channel).lower()]['tijd'])
-            print(oudetijd)
-            nieuwetijd = minutenincall
+#         try:
+#             oudetijd = int(leaderboard[str(before.channel).lower()]['tijd'])
+#             print(oudetijd)
+#             nieuwetijd = minutenincall
 
-            if nieuwetijd > oudetijd:
-                print('betere tijd')
-                leaderboard[str(before.channel).lower()] = {'tijd': str(minutenincall), 'member': str(member.id)}
-                with open('calltimer/leaderboard.json', 'w') as f:
-                    json.dump(leaderboard, f)
-                f.close()
-            else:
-                print('geen beter tijd')
+#             if nieuwetijd > oudetijd:
+#                 print('betere tijd')
+#                 leaderboard[str(before.channel).lower()] = {'tijd': str(minutenincall), 'member': str(member.id)}
+#                 with open('calltimer/leaderboard.json', 'w') as f:
+#                     json.dump(leaderboard, f)
+#                 f.close()
+#             else:
+#                 print('geen beter tijd')
 
-        except KeyError:
-            leaderboard[str(before.channel).lower()] = {'tijd': str(minutenincall), 'member': str(member.id)}
-            with open('calltimer/leaderboard.json', 'w') as f:
-                json.dump(leaderboard, f)
-            f.close()
+#         except KeyError:
+#             leaderboard[str(before.channel).lower()] = {'tijd': str(minutenincall), 'member': str(member.id)}
+#             with open('calltimer/leaderboard.json', 'w') as f:
+#                 json.dump(leaderboard, f)
+#             f.close()
 
 client.run(TOKEN)

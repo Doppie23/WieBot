@@ -36,6 +36,16 @@ def meeste_ls():
     ls_sorted, user_sorted = (list(t) for t in zip(*sorted(zip(ls, gerbruikers), reverse=True)))
     return ls_sorted, user_sorted
 
+def list_alle_gebruikers() -> list:
+    with open('noeps/noep.json') as f:
+        data = json.load(f)
+    iedereen = []
+    for i in data:
+        user = data[i][1]
+        if user not in iedereen:
+            iedereen.append(user)
+    return iedereen
+
 def clip_van_gebruiker_met_meeste_ls(user):
     '''
     Geeft van een gebruiker de clip met de meeste l's
