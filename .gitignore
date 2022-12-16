@@ -1,8 +1,10 @@
 .env
 praw.ini
 __pycache__/
+/.cache
 calltimer/data.json
 calltimer/leaderboard.json
 /IMG_5400.jpg
 /epiicideee.txt
 /links.txt
+/handig
