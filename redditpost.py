@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-id = os.getenv('CLIENT_ID')
+id = os.getenv('CLIENT_ID_REDDIT')
 secret = os.getenv('REDDIT_CLIENT_SECRET')
 
 def randomcopypasta():  

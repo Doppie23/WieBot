@@ -10,6 +10,7 @@ import asyncio
 from datetime import datetime, timedelta
 import json
 from func import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls
+from muziek import muziekspelen
 
 intents = discord.Intents.all()
 
@@ -32,6 +33,7 @@ class aclient(discord.Client):
 
 client = aclient()
 tree = app_commands.CommandTree(client)
+player = muziekspelen()
 
 @tree.command(name="copypasta", description="stuurt een random copypasta van r/copypasta", guild=guild)
 async def self(interaction: discord.Interaction):
@@ -114,6 +116,16 @@ async def self(interaction: discord.Interaction):
         await interaction.response.send_message(':wave:', ephemeral=True)
     else:
         await interaction.response.send_message("Bot zit niet in een kanaal.", ephemeral=True)
+
+@tree.command(name="muziek-quiz", description="Start een muziek quiz. Werkt alleen met een Spotify playlist, niet met albums of een blend.", guild=guild)
+async def self(interaction: discord.Interaction, url: str, aantal_nummers: int):
+    if aantal_nummers > 10:
+        aantal_nummers = 10
+    player.initquiz(interaction, client, url, aantal_nummers)
+    voice_channel = interaction.guild.voice_client
+    if voice_channel == None or voice_channel.is_connected() != True:
+        await player.join()
+    await player.start()
     
 @tree.command(name="noep", description="!noep", guild=guild)
 async def self(interaction: discord.Interaction):
@@ -200,6 +212,7 @@ async def on_message(message: discord.Message):
     if message.author == client.user:
         # print('eigen bericht')
         return
+    await player.message_handler(message)
 
         # print(message.content)
     if message.content.lower().startswith('wie'):

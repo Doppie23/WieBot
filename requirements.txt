@@ -2,3 +2,7 @@ discord.py
 praw
 python-dotenv
 PyNaCl
+spotipy
+colorama
+youtube_dl
+youtube-search
