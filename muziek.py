@@ -72,11 +72,7 @@ class muziekspelen(object):
         with youtube_dl.YoutubeDL(ytdl_format_options) as ydl:
             info = ydl.extract_info(url, download=False)
             url2 = info['formats'][0]['url']
-            source = await discord.FFmpegOpusAudio.from_probe(
-                url2,
-                **ffmpeg_options
-            )
-            vc.play(source)
+            vc.play(discord.FFmpegPCMAudio(executable='ffmpeg.exe', source=url2))
         await channel.send(f'🎵 Nieuwe ronde start met raden 🎵')
 
     async def start(self):
@@ -138,7 +134,8 @@ class muziekspelen(object):
         embed.add_field(name='Het spel', value='Elke ronde komt er weer een nieuw nummer voor een bepaalde tijd, typ in de chat hoe jij denkt dat het nummer heet en wie de artiest is.', inline=False)
         embed.add_field(name='Score', value='Voor elk goede antwoord krijg je een punt, het hoeft niet helemaal goed getypt te zijn.\
              Let wel op, alles moet wel apart in de chat. Dus alle artiesten en de naam van het nummer in aparte berichten.', inline=False)
-        embed.add_field(name='?skip', value='Gebruik deze command om het huidige nummer over te slaan. 1/2 van iedereen die aan de quiz mee moet skippen.', inline=False)
+        embed.add_field(name='?skip', value='Gebruik dit om het huidige nummer over te slaan. 1/2 van iedereen die aan de quiz mee doet moet skippen.', inline=False)
+        embed.add_field(name='Ik hoor niks?', value='Kan gebeuren, skip het nummer en meestal werkt het dan weer.', inline=False)
         return embed
 
     async def message_handler(self, message: discord.Message):
