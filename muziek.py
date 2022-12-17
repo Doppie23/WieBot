@@ -74,6 +74,9 @@ class muziekspelen(object):
             url2 = info['formats'][0]['url']
             vc.play(discord.FFmpegPCMAudio(executable='ffmpeg', source=url2))
         await channel.send(f'🎵 Nieuwe ronde start met raden 🎵')
+        if vc.is_playing() != True:
+            await channel.send(f'🚩 Error -> dit nummer wordt geskipt')
+            self.nummer_speel_tijd.cancel()
 
     async def start(self):
         channel = self.interaction.channel
