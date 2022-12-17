@@ -96,7 +96,7 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
 async def kick(member):
     await member.move_to(None)
 
-@tree.command(name="tts", description="tts test")
+@tree.command(name="tts", description="tts test" , guild=guild)
 @app_commands.describe(text='text die bot moet zeggen', channel_id='id van kanaal')
 async def self(interaction: discord.Interaction, text: str, channel_id: str):
     voice = interaction.guild.voice_client
