@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from asyncio import sleep
 import asyncio
 from datetime import datetime, timedelta
+from gtts import gTTS
 import json
 from func import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls
 from muziek import muziekspelen
@@ -95,6 +96,20 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
 async def kick(member):
     await member.move_to(None)
 
+@tree.command(name="tts", description="tts test")
+@app_commands.describe(text='text die bot moet zeggen', channel_id='id van kanaal')
+async def self(interaction: discord.Interaction, text: str, channel_id: str):
+    voice = interaction.guild.voice_client
+    if voice == None:
+        channel = client.get_channel(int(channel_id))
+        # channel = interaction.user.voice.channel
+        await channel.connect()
+    voice = interaction.guild.voice_client
+    audio = gTTS(text=text, lang="nl", slow=False)
+    audio.save("text.mp3")
+    voice.play(discord.FFmpegPCMAudio(executable='ffmpeg', source='text.mp3'))
+    await interaction.response.send_message(f'zegt nu: {text}', ephemeral=True)
+
 @tree.command(name="vrienden", description="!vrienden", guild=guild)
 async def self(interaction: discord.Interaction):
     voice_channel = interaction.user.voice
@@ -117,7 +132,8 @@ async def self(interaction: discord.Interaction):
     else:
         await interaction.response.send_message("Bot zit niet in een kanaal.", ephemeral=True)
 
-@tree.command(name="muziek-quiz", description="Start een muziek quiz. Werkt alleen met een Spotify playlist, niet met albums of een blend.", guild=guild)
+@tree.command(name="muziek-quiz", description="Start een muziek quiz.", guild=guild)
+@app_commands.describe(url='Link naar Spotify playlist. Werkt alleen met een playlist, niet met albums of blends.', aantal_nummers='Aantal nummers waar de quiz uit moet bestaan.')
 async def self(interaction: discord.Interaction, url: str, aantal_nummers: int):
     if aantal_nummers > 10:
         aantal_nummers = 10

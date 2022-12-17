@@ -138,7 +138,7 @@ class muziekspelen(object):
         embed.add_field(name='Score', value='Voor elk goede antwoord krijg je een punt, het hoeft niet helemaal goed getypt te zijn.\
              Let wel op, alles moet wel apart in de chat. Dus alle artiesten en de naam van het nummer in aparte berichten.', inline=False)
         embed.add_field(name='?skip', value='Gebruik dit om het huidige nummer over te slaan. 1/2 van iedereen die aan de quiz mee doet moet skippen.', inline=False)
-        embed.add_field(name='Ik hoor niks?', value='Kan gebeuren, skip het nummer en meestal werkt het dan weer.', inline=False)
+        embed.add_field(name='Ik hoor niks?', value='Kan gebeuren, als het niet goed gaat skipt meestal de bot het nummer zelf. Bij sommige nummers duurt het wat langer vordat ze beginnen.', inline=False)
         return embed
 
     async def message_handler(self, message: discord.Message):
