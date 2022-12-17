@@ -72,7 +72,7 @@ class muziekspelen(object):
         with youtube_dl.YoutubeDL(ytdl_format_options) as ydl:
             info = ydl.extract_info(url, download=False)
             url2 = info['formats'][0]['url']
-            vc.play(discord.FFmpegPCMAudio(executable='ffmpeg.exe', source=url2))
+            vc.play(discord.FFmpegPCMAudio(executable='ffmpeg', source=url2))
         await channel.send(f'🎵 Nieuwe ronde start met raden 🎵')
 
     async def start(self):
