@@ -7,7 +7,7 @@ from muziek import muziekspelen
 
 intents = discord.Intents.all()
 # TOKEN = os.getenv(sys.argv[1])
-TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN = os.getenv('DISCORD_TOKEN_TEST_BOT')
 # guild = discord.Object(id=690215022957559942)
 
 class aclient(discord.Client):
