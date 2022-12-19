@@ -142,6 +142,10 @@ async def self(interaction: discord.Interaction, url: str, aantal_nummers: int):
     if voice_channel == None or voice_channel.is_connected() != True:
         await player.join()
     await player.start()
+
+@tree.command(name="stop-quiz", description="stopt quiz", guild=guild)
+async def self(interaction: discord.Interaction):
+    await player.force_quit_quiz(interaction)
     
 @tree.command(name="noep", description="!noep", guild=guild)
 async def self(interaction: discord.Interaction):

@@ -45,6 +45,8 @@ class muziekspelen(object):
         self.name_geraden = False
         self.voteskips = 0
 
+        self.force_quit_quiz_bool = False
+
     async def join(self):
         voice_channel = self.interaction.user.voice
         if voice_channel != None:
@@ -88,6 +90,8 @@ class muziekspelen(object):
         self.playlist = spotify_naar_youtubeid(self.url, self.aantal_nummers)
         self.scorebord_create()
         for i in self.playlist:
+            if self.force_quit_quiz_bool == True:
+                continue
             ytid = i[0]
             self.name = i[1]
             self.artist = i[2]
@@ -108,9 +112,15 @@ class muziekspelen(object):
         embed = discord.Embed(title='Einde spel', color=discord.Colour.red())
         await channel.send(embed=embed)
 
-    async def force_quit_quiz(self):
-        # in for loop if function met if skip true continue
-        print('skip')
+    async def force_quit_quiz(self, interaction: discord.Interaction):
+        if self.quizbezig == True:
+            self.force_quit_quiz_bool = True
+            try:
+                self.nummer_speel_tijd.cancel()
+            finally:
+                await interaction.response.send_message('Stopt quiz')
+        else:
+            await interaction.response.send_message('geen quiz bezig', ephemeral=True)
 
     def scorebord_create(self):
         self.scorebord = {}
