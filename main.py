@@ -12,7 +12,7 @@ from gtts import gTTS
 import json
 from func import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls
 from muziek import muziekspelen
-
+#test
 intents = discord.Intents.all()
 
 load_dotenv()
