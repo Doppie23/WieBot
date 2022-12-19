@@ -21,11 +21,6 @@ ytdl_format_options = {
     # 'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
 
-ffmpeg_options = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn'
-}
-
 class muziekspelen(object):    
     def __init__(self) -> None:
         self.quizbezig = False
@@ -77,7 +72,7 @@ class muziekspelen(object):
         with youtube_dl.YoutubeDL(ytdl_format_options) as ydl:
             info = ydl.extract_info(url, download=False)
             url2 = info['formats'][0]['url']
-            vc.play(discord.FFmpegPCMAudio(executable='ffmpeg', source=url2))
+            vc.play(discord.FFmpegPCMAudio(executable='ffmpeg', source=url2, before_options='-ss 00:00:20'))
         await channel.send(f'🎵 Nieuwe ronde start met raden 🎵')
         if vc.is_playing() != True:
             await channel.send(f'🚩 Error -> dit nummer wordt geskipt')
@@ -92,6 +87,7 @@ class muziekspelen(object):
         for i in self.playlist:
             if self.force_quit_quiz_bool == True:
                 continue
+            #init ronde
             ytid = i[0]
             self.name = i[1]
             self.artist = i[2]
@@ -100,6 +96,7 @@ class muziekspelen(object):
             self.name_geraden = False
             self.voteskips = 0
             self.ronde += 1
+
             print(Fore.MAGENTA + f'nummer: {self.name}\nartiest: {self.artist}')
             asyncio.ensure_future(self.play(ytid))
             self.nummer_speel_tijd = asyncio.create_task(self.cancelable_sleep(45)) # tijd per nummer
