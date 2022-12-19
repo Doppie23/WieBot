@@ -133,7 +133,7 @@ async def self(interaction: discord.Interaction):
         await interaction.response.send_message("Bot zit niet in een kanaal.", ephemeral=True)
 
 @tree.command(name="muziek-quiz", description="Start een muziek quiz.", guild=guild)
-@app_commands.describe(url='Link naar Spotify playlist. Werkt alleen met een playlist, niet met albums of blends.', aantal_nummers='Aantal nummers waar de quiz uit moet bestaan.')
+@app_commands.describe(url='Link naar Spotify playlist. Werkt alleen met een playlist, niet met albums of blends.', aantal_nummers='Aantal nummers waar de quiz uit moet bestaan (max 10).')
 async def self(interaction: discord.Interaction, url: str, aantal_nummers: int):
     if aantal_nummers > 10:
         aantal_nummers = 10

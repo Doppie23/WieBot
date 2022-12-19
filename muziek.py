@@ -34,12 +34,14 @@ class muziekspelen(object):
         self.quizbezig = True
         self.url = url
         self.aantal_nummers = aantal_nummers
+        self.ronde = 0
 
         self.interaction = interaction
         self.client = client
         self.name = ''
         self.artist = ''
         self.all_geraden = []
+        self.skip_gebruikt = []
         self.name_geraden = False
         self.voteskips = 0
 
@@ -57,6 +59,7 @@ class muziekspelen(object):
         voice_channel = self.interaction.guild.voice_client
         if voice_channel != None or voice_channel.is_connected():
             await voice_channel.disconnect()
+            self.quizbezig = False
             self.vc.cleanup()
         else:
             await self.interaction.response.send_message("Bot zit niet in een kanaal.", ephemeral=True)
@@ -89,8 +92,10 @@ class muziekspelen(object):
             self.name = i[1]
             self.artist = i[2]
             self.all_geraden = []
+            self.skip_gebruikt = []
             self.name_geraden = False
             self.voteskips = 0
+            self.ronde += 1
             print(Fore.MAGENTA + f'nummer: {self.name}\nartiest: {self.artist}')
             asyncio.ensure_future(self.play(ytid))
             self.nummer_speel_tijd = asyncio.create_task(self.cancelable_sleep(45)) # tijd per nummer
@@ -102,7 +107,10 @@ class muziekspelen(object):
         await self.leave()
         embed = discord.Embed(title='Einde spel', color=discord.Colour.red())
         await channel.send(embed=embed)
-        self.quizbezig = False
+
+    async def force_quit_quiz(self):
+        # in for loop if function met if skip true continue
+        print('skip')
 
     def scorebord_create(self):
         self.scorebord = {}
@@ -123,7 +131,7 @@ class muziekspelen(object):
         return sorted_scorebord
 
     def embed_scorebord(self):
-        embed = discord.Embed(title='Scorebord', color=discord.Colour.random())
+        embed = discord.Embed(title=f'Scorebord - Ronde {self.ronde}/{self.aantal_nummers}', color=discord.Colour.random())
         sorted_scorebord = self.scorebord_sort()
         nummer = 1
         for name in sorted_scorebord:
@@ -136,9 +144,9 @@ class muziekspelen(object):
         embed = discord.Embed(title='Regels', color=discord.Colour.gold())
         embed.add_field(name='Het spel', value='Elke ronde komt er weer een nieuw nummer voor een bepaalde tijd, typ in de chat hoe jij denkt dat het nummer heet en wie de artiest is.', inline=False)
         embed.add_field(name='Score', value='Voor elk goede antwoord krijg je een punt, het hoeft niet helemaal goed getypt te zijn.\
-             Let wel op, alles moet wel apart in de chat. Dus alle artiesten en de naam van het nummer in aparte berichten.', inline=False)
-        embed.add_field(name='?skip', value='Gebruik dit om het huidige nummer over te slaan. 1/2 van iedereen die aan de quiz mee doet moet skippen.', inline=False)
-        embed.add_field(name='Ik hoor niks?', value='Kan gebeuren, als het niet goed gaat skipt meestal de bot het nummer zelf. Bij sommige nummers duurt het wat langer vordat ze beginnen.', inline=False)
+             Let wel op, alles moet apart in de chat. Dus alle artiesten en de naam van het nummer in aparte berichten.', inline=False)
+        embed.add_field(name='?skip', value='Gebruik dit om het huidige nummer over te slaan. De helft van iedereen die aan de quiz mee doet moet skippen.', inline=False)
+        embed.add_field(name='Ik hoor niks?', value='Kan gebeuren, als het niet goed gaat skipt de bot het nummer zelf. Bij sommige nummers duurt het wat langer voordat ze beginnen.', inline=False)
         return embed
 
     async def message_handler(self, message: discord.Message):
@@ -148,11 +156,15 @@ class muziekspelen(object):
         if message.author == self.client.user:
             return
         if message.content.startswith('?skip'):
+            if message.author in self.skip_gebruikt:
+                return
             self.voteskips += 1
-            votes_nodig = round(0.5*len(self.scorebord))
+            self.skip_gebruikt.append(message.author)
+            votes_nodig = round(1.0*len(self.scorebord))
             await message.channel.send(f'{self.voteskips}/{votes_nodig} votes voor skip')
             if self.voteskips >= votes_nodig:
                 self.nummer_speel_tijd.cancel()
+            return
 
         artist_list = re.split(', ', self.artist)
 
