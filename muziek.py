@@ -87,12 +87,6 @@ class muziekspelen(object):
         await channel.send(embed=spel_uitleg)
         self.playlist = spotify_naar_youtubeid(self.url, self.aantal_nummers)
 
-        # self.playlist = [('YQHsXMglC9A', 'Hello', 'Adele'), ('iEp9MHJP0NA', 'First Time', 'Fairlane, RUNN'), ('PrVd-42cC_Y', 'This Moment (feat. Gallie Fisher)', 'Crystal Skies, Gallie Fisher')]
-
-        print(self.playlist)
-
-
-
         self.scorebord_create()
         for i in self.playlist:
             if self.force_quit_quiz_bool == True:
