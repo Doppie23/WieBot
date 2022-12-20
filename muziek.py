@@ -5,6 +5,8 @@ import youtube_dl
 import asyncio
 import difflib
 from spotifynaaryoutubelinks import spotify_naar_youtubeid
+import requests
+import datetime
 
 youtube_dl.utils.bug_reports_message = lambda: ''
 
@@ -69,10 +71,11 @@ class muziekspelen(object):
         voice_channel.stop()
         vc = voice_channel
         await asyncio.sleep(5) # pauze tussen nummers door
+        starttijd = self.startpunt_get(id)
         with youtube_dl.YoutubeDL(ytdl_format_options) as ydl:
             info = ydl.extract_info(url, download=False)
             url2 = info['formats'][0]['url']
-            vc.play(discord.FFmpegPCMAudio(executable='ffmpeg', source=url2, before_options='-ss 00:00:20'))
+            vc.play(discord.FFmpegPCMAudio(executable='ffmpeg', source=url2, before_options=starttijd))
         await channel.send(f'🎵 Nieuwe ronde start met raden 🎵')
         if vc.is_playing() != True:
             await channel.send(f'🚩 Error -> dit nummer wordt geskipt')
@@ -83,6 +86,13 @@ class muziekspelen(object):
         spel_uitleg = self.speluitleg()
         await channel.send(embed=spel_uitleg)
         self.playlist = spotify_naar_youtubeid(self.url, self.aantal_nummers)
+
+        # self.playlist = [('YQHsXMglC9A', 'Hello', 'Adele'), ('iEp9MHJP0NA', 'First Time', 'Fairlane, RUNN'), ('PrVd-42cC_Y', 'This Moment (feat. Gallie Fisher)', 'Crystal Skies, Gallie Fisher')]
+
+        print(self.playlist)
+
+
+
         self.scorebord_create()
         for i in self.playlist:
             if self.force_quit_quiz_bool == True:
@@ -96,7 +106,7 @@ class muziekspelen(object):
             self.name_geraden = False
             self.voteskips = 0
             self.ronde += 1
-
+            
             print(Fore.MAGENTA + f'nummer: {self.name}\nartiest: {self.artist}')
             asyncio.ensure_future(self.play(ytid))
             self.nummer_speel_tijd = asyncio.create_task(self.cancelable_sleep(45)) # tijd per nummer
@@ -214,3 +224,24 @@ class muziekspelen(object):
             raise
         finally:
             return
+
+    def startpunt_get(self, id):
+        url = 'https://sponsor.ajay.app/api/skipSegments'
+
+        params = {
+        'videoID': id,  
+        'category': 'music_offtopic'
+        }
+
+        r = requests.get(url, params)
+        if r.status_code == 200:
+            data = r.json()
+
+            tijd = data[0]['segment'][1]
+            tijd = round(int(tijd))
+
+            tijd = str(datetime.timedelta(seconds=tijd))
+            tijd = f'-ss {tijd}'
+            return tijd
+        else:
+            return None
