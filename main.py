@@ -76,6 +76,7 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         channel = voice_channel.name
         incall = voice_channel.members
         vc = await voice_channel.connect()
+        member_leave_list = []
         await interaction.response.send_message(bericht)
         if file == '/outro/outro kort.wav':
             original_message = await interaction.original_response()
@@ -87,14 +88,17 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         await vc.disconnect()
 
         await asyncio.wait([
-        asyncio.create_task(kick(incall[i]))
+        asyncio.create_task(kick(incall[i], member_leave_list))
         for i in range(len(incall))
         ])
+        laatste: discord.Member = member_leave_list[0]
+        await interaction.channel.send(f'{laatste.mention}')
     else:
         await interaction.response.send_message("Join eerst een spraakkanaal.")
 
-async def kick(member):
+async def kick(member: discord.Member, list: list):
     await member.move_to(None)
+    list.insert(0, member)
 
 @tree.command(name="tts", description="tts test" , guild=guild)
 @app_commands.describe(text='text die bot moet zeggen', channel_id='id van kanaal')
