@@ -103,7 +103,7 @@ class muziekspelen(object):
             
             print(Fore.MAGENTA + f'nummer: {self.name}\nartiest: {self.artist}')
             asyncio.ensure_future(self.play(ytid))
-            self.nummer_speel_tijd = asyncio.create_task(self.cancelable_sleep(45)) # tijd per nummer
+            self.nummer_speel_tijd = asyncio.create_task(self.cancelable_sleep(60)) # tijd per nummer
             await self.nummer_speel_tijd
             await channel.send(f'🛑 Het antwoord was: {self.name} - {self.artist}')
             embed_score = self.embed_scorebord()
