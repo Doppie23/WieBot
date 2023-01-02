@@ -75,6 +75,7 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         voice_channel = voice_channel.channel
         channel = voice_channel.name
         incall = voice_channel.members
+        random.shuffle(incall)
         vc = await voice_channel.connect()
         member_leave_list = []
         await interaction.response.send_message(bericht)
