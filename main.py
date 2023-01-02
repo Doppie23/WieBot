@@ -75,9 +75,11 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         voice_channel = voice_channel.channel
         channel = voice_channel.name
         incall = voice_channel.members
-        random.shuffle(incall)
-        vc = await voice_channel.connect()
+        kick_tasks = []
         member_leave_list = []
+        for member in incall:
+            kick_tasks.append(kick(member, member_leave_list))
+        vc = await voice_channel.connect()
         await interaction.response.send_message(bericht)
         if file == '/outro/outro kort.wav':
             original_message = await interaction.original_response()
@@ -88,10 +90,8 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
             await sleep(0.1)
         await vc.disconnect()
 
-        await asyncio.wait([
-        asyncio.create_task(kick(incall[i], member_leave_list))
-        for i in range(len(incall))
-        ])
+        await asyncio.gather(*kick_tasks)
+
         laatste: discord.Member = member_leave_list[0]
         await interaction.channel.send(f'{laatste.mention}')
     else:
