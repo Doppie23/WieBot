@@ -70,8 +70,9 @@ class muziekspelen(object):
         voice_channel = server.voice_client
         voice_channel.stop()
         vc = voice_channel
-        await asyncio.sleep(5) # pauze tussen nummers door
         starttijd = self.startpunt_get(id)
+        if self.ronde != 1:
+            await asyncio.sleep(5) # pauze tussen nummers door
         with youtube_dl.YoutubeDL(ytdl_format_options) as ydl:
             info = ydl.extract_info(url, download=False)
             url2 = info['formats'][0]['url']
@@ -85,24 +86,31 @@ class muziekspelen(object):
         channel = self.interaction.channel
         spel_uitleg = self.speluitleg()
         await channel.send(embed=spel_uitleg)
-        self.playlist = spotify_naar_youtubeid(self.url, self.aantal_nummers)
-
+        try:
+            self.playlist = spotify_naar_youtubeid(self.url, self.aantal_nummers)
+        except:
+            await channel.send("geen goede spotify link")
+            await self.leave()
+            return
         self.scorebord_create()
+
         for i in self.playlist:
             if self.force_quit_quiz_bool == True:
                 continue
             #init ronde
             ytid = i[0]
-            self.name = i[1]
-            self.artist = i[2]
-            self.all_geraden = []
             self.skip_gebruikt = []
-            self.name_geraden = False
             self.voteskips = 0
             self.ronde += 1
             
             print(Fore.MAGENTA + f'nummer: {self.name}\nartiest: {self.artist}')
             asyncio.ensure_future(self.play(ytid))
+
+            self.all_geraden = []
+            self.name_geraden = False
+            self.name = i[1]
+            self.artist = i[2]
+
             self.nummer_speel_tijd = asyncio.create_task(self.cancelable_sleep(60)) # tijd per nummer
             await self.nummer_speel_tijd
             await channel.send(f'🛑 Het antwoord was: {self.name} - {self.artist}')
