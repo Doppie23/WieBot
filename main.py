@@ -281,4 +281,26 @@ async def on_message(message: discord.Message):
         await message.channel.send(f"<@{user}> wie vroeg?")
         # print('bericht')
 
+@client.event
+async def on_voice_state_update(member, before: discord.VoiceState, after: discord.VoiceState):
+    if after.channel == None:
+        return
+    if before.channel == after.channel:
+        return
+    if before.channel != after.channel:
+        source = random_nummer()
+        voice_channel = after.channel
+        vc = await voice_channel.connect()
+        vc.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=source))
+        while vc.is_playing():
+            await asyncio.sleep(0.1)
+        await vc.disconnect(force=True)
+        vc.cleanup()
+
+def random_nummer():
+    dir = os.path.join(os.getcwd(), "joinsounds")
+    randomnummer = random.choice(os.listdir(dir))
+    path = os.path.join(dir, randomnummer)
+    return path
+
 client.run(TOKEN)

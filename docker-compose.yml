@@ -1,0 +1,11 @@
+version: "3.4"
+
+services:
+  wiebot:
+    image: wiebot
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - .:/app
+    restart: always
