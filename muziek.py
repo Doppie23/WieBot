@@ -1,7 +1,7 @@
 import re
 from colorama import Fore
 import discord
-import youtube_dl
+import yt_dlp as youtube_dl
 import asyncio
 import difflib
 from spotifynaaryoutubelinks import spotify_naar_youtubeid
@@ -75,7 +75,8 @@ class muziekspelen(object):
             await asyncio.sleep(5) # pauze tussen nummers door
         with youtube_dl.YoutubeDL(ytdl_format_options) as ydl:
             info = ydl.extract_info(url, download=False)
-            url2 = info['formats'][0]['url']
+            url2 = info["url"]
+            print(url2)
             vc.play(discord.FFmpegPCMAudio(executable='ffmpeg', source=url2, before_options=starttijd))
         await channel.send(f'🎵 Nieuwe ronde start met raden 🎵')
         if vc.is_playing() != True:

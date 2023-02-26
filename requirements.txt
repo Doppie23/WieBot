@@ -4,6 +4,6 @@ python-dotenv
 PyNaCl
 spotipy
 colorama
-youtube_dl
+https://github.com/yt-dlp/yt-dlp/archive/master.tar.gz
 youtube-search
 gTTS
