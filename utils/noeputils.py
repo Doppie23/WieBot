@@ -1,6 +1,4 @@
 import json
-from operator import itemgetter
-from collections import OrderedDict
 def totaal_user(usermention: str) -> int:
     '''
     Geeft de totale l's van een gebruiker

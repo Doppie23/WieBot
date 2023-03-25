@@ -1,16 +1,16 @@
 import os
 import random
 import re
-from redditpost import randomcopypasta, randomshitpost
+from utils.redditpost import randomcopypasta, randomshitpost
 import discord
 from discord import app_commands
 from dotenv import load_dotenv
 from asyncio import sleep
 import asyncio
-from datetime import datetime, timedelta
 from gtts import gTTS
 import json
-from func import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls
+from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls
+from utils.trackleave import addScoreLaatsteLeave, Leaderboard
 from muziek import muziekspelen
 
 intents = discord.Intents.all()
@@ -94,6 +94,7 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         await asyncio.gather(*kick_tasks)
 
         laatste: discord.Member = member_leave_list[0]
+        addScoreLaatsteLeave(str(laatste.id), laatste.name)
         await interaction.channel.send(f'{laatste.mention}')
     else:
         await interaction.response.send_message("Join eerst een spraakkanaal.")
@@ -101,6 +102,21 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
 async def kick(member: discord.Member, list: list):
     await member.move_to(None)
     list.insert(0, member)
+
+@tree.command(name="outroleaderboard", description="@boodschapjes", guild=guild)
+async def self(interaction: discord.Interaction):
+    embed = discord.Embed(title='Vaakst het laatste de call verlaten', color=discord.Colour.random())
+    Scorebord = Leaderboard()
+    nummer = 1
+    for UserID in Scorebord:
+        Score = Scorebord[UserID]
+        User: discord.User = client.get_user(int(UserID))
+        if nummer == 1:
+            embed.set_thumbnail(url=User.avatar)
+        embed.add_field(name=f"{nummer}: {User.name}", value=f"{Score} keer", inline=False)
+        nummer += 1
+
+    await interaction.response.send_message(embed=embed)
 
 @tree.command(name="sonnet18", description="big hype", guild=guild)
 async def self(interaction: discord.Interaction):
@@ -264,7 +280,7 @@ async def on_raw_reaction_remove(payload: discord.Reaction):
             data[link][0] -= 1
             print(f'-1 vote voor {link}')
             with open(r'noeps/noep.json', 'w') as f:
-                json.dump(data, f, indent=4)            
+                json.dump(data, f, indent=4)
     else:
         return
 
@@ -282,7 +298,7 @@ async def on_message(message: discord.Message):
         # print('bericht')
 
 @client.event
-async def on_voice_state_update(member, before: discord.VoiceState, after: discord.VoiceState):
+async def on_voice_state_update(member: discord.User, before: discord.VoiceState, after: discord.VoiceState):
     if after.channel == None:
         return
     if before.channel == after.channel:

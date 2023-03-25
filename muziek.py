@@ -4,7 +4,7 @@ import discord
 import yt_dlp as youtube_dl
 import asyncio
 import difflib
-from spotifynaaryoutubelinks import spotify_naar_youtubeid
+from utils.spotifynaaryoutubelinks import spotify_naar_youtubeid
 import requests
 import datetime
 
