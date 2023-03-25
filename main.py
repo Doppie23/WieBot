@@ -9,7 +9,7 @@ from asyncio import sleep
 import asyncio
 from gtts import gTTS
 import json
-from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls
+from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls, add_noep, rem_noep
 from utils.trackleave import addScoreLaatsteLeave, Leaderboard
 from muziek import muziekspelen
 
@@ -203,6 +203,21 @@ async def self(interaction: discord.Interaction, url: str, aantal_nummers: int):
 @tree.command(name="stop-quiz", description="stopt quiz", guild=guild)
 async def self(interaction: discord.Interaction):
     await player.force_quit_quiz(interaction)
+
+def check_if_is_admin(interaction: discord.Interaction) -> bool:
+    return interaction.user.id == 327038629585223690
+
+@tree.command(name="add_noep", description="voeg een /noep toe", guild=guild)
+@app_commands.check(check_if_is_admin)
+async def self(interaction: discord.Interaction, link: str, userid: int):
+    add_noep(link, userid)
+    await interaction.response.send_message(f"{link} is nu een /noep", ephemeral=True)
+
+@tree.command(name="rem_noep", description="remove een /noep toe", guild=guild)
+@app_commands.check(check_if_is_admin)
+async def self(interaction: discord.Interaction, link: str):
+    rem_noep(link)
+    await interaction.response.send_message(f"{link} is nu niet meer een /noep", ephemeral=True)
     
 @tree.command(name="noep", description="!noep", guild=guild)
 async def self(interaction: discord.Interaction):

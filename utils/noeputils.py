@@ -1,4 +1,5 @@
 import json
+from time import sleep
 def totaal_user(usermention: str) -> int:
     '''
     Geeft de totale l's van een gebruiker
@@ -60,3 +61,18 @@ def clip_van_gebruiker_met_meeste_ls(user):
             ls_clips.append(ls)
     ls_sorted, clips_sorted = (list(t) for t in zip(*sorted(zip(ls_clips, clips_user), reverse=True)))
     return clips_sorted[0], ls_sorted[0]
+
+def add_noep(Link: str, userID: int):
+    with open('noeps/noep.json') as f:
+        data = json.load(f)
+    UserTag = f"<@{userID}>"
+    data[Link] = [0, UserTag]
+    with open('noeps/noep.json', "w") as f:
+        json.dump(data, f, indent=4)
+
+def rem_noep(Link: str):
+    with open('noeps/noep.json') as f:
+        data: dict = json.load(f)
+    data.pop(Link)
+    with open('noeps/noep.json', "w") as f:
+        json.dump(data, f, indent=4)
