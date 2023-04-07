@@ -11,6 +11,7 @@ from gtts import gTTS
 import json
 from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls, add_noep, rem_noep
 from utils.trackleave import addScoreLaatsteLeave, Leaderboard
+from utils.nanogpt_utils import getResponse, getAntwoordzonderPrompt
 from muziek import muziekspelen
 
 intents = discord.Intents.all()
@@ -55,6 +56,7 @@ async def self(interaction: discord.Interaction):
 @app_commands.choices(choices=[
         app_commands.Choice(name="Crab Rave", value="crabrave"),
         app_commands.Choice(name="Epic Outro", value="outro"),
+        app_commands.Choice(name="Royalistiq", value="royalistiq")
         ])
 
 @tree.command(name="outro", description="Epic outro", guild=guild)
@@ -68,6 +70,11 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         file = '/outro/outro kort.wav'
         source = os.getcwd()+file
         bericht = "SMASH THAT LIKE BUTTON :thumbsup:"
+
+    elif (choices.value == 'royalistiq'):
+        file = '/outro/royalistiq.mp3'
+        source = os.getcwd()+file
+        bericht = "HOOWWH MY DAYS 😱"
 
     voice_channel = interaction.user.voice
     channel = None
@@ -89,7 +96,7 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         vc.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=source))
         while vc.is_playing():
             await sleep(0.1)
-        await vc.disconnect()
+        await vc.disconnect(force=True)
 
         await asyncio.gather(*kick_tasks)
 
@@ -148,7 +155,7 @@ https://tenor.com/view/rave-shuffle-hardstyle-gif-26548943
         vc.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=source))
         while vc.is_playing():
             await sleep(0.1)
-        await vc.disconnect()
+        await vc.disconnect(force=True)
     else:
         await interaction.response.send_message("Join eerst een spraakkanaal.")
 
@@ -184,7 +191,7 @@ async def self(interaction: discord.Interaction):
 async def self(interaction: discord.Interaction):
     voice_channel = interaction.guild.voice_client
     if voice_channel != None or voice_channel.is_connected():
-        await voice_channel.disconnect()
+        await voice_channel.disconnect(force=True)
         await interaction.response.send_message(':wave:', ephemeral=True)
     else:
         await interaction.response.send_message("Bot zit niet in een kanaal.", ephemeral=True)
@@ -209,8 +216,8 @@ def check_if_is_admin(interaction: discord.Interaction) -> bool:
 
 @tree.command(name="add_noep", description="voeg een /noep toe", guild=guild)
 @app_commands.check(check_if_is_admin)
-async def self(interaction: discord.Interaction, link: str, userid: int):
-    add_noep(link, userid)
+async def self(interaction: discord.Interaction, link: str, userid: str):
+    add_noep(link, int(userid))
     await interaction.response.send_message(f"{link} is nu een /noep", ephemeral=True)
 
 @tree.command(name="rem_noep", description="remove een /noep toe", guild=guild)
@@ -312,6 +319,20 @@ async def on_message(message: discord.Message):
         await message.channel.send(f"<@{user}> wie vroeg?")
         # print('bericht')
 
+    # gpt troep
+    if message.content.startswith(client.user.mention):
+        bericht = message.content.removeprefix(client.user.mention)
+        try:
+            async with message.channel.typing():
+                antwoorden = await getResponse(bericht)
+                antwoord = getAntwoordzonderPrompt(bericht, antwoorden)
+            await message.channel.send(antwoord)
+        except Exception as e:
+            print("ai troep werkt niet")
+            print(e)
+            error_message = await message.channel.send("AI doet het nu ff niet")
+            await error_message.delete(delay=2)
+
 @client.event
 async def on_voice_state_update(member: discord.User, before: discord.VoiceState, after: discord.VoiceState):
     if after.channel == None:
@@ -319,6 +340,11 @@ async def on_voice_state_update(member: discord.User, before: discord.VoiceState
     if before.channel == after.channel:
         return
     if before.channel != after.channel:
+        # fix bug voor already connect
+        voices = client.voice_clients
+        for connection in voices:
+            await connection.disconnect()
+
         source = random_nummer()
         voice_channel = after.channel
         vc = await voice_channel.connect()
