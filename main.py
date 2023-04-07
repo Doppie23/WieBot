@@ -1,7 +1,6 @@
 import os
 import random
 import re
-from utils.redditpost import randomcopypasta, randomshitpost
 import discord
 from discord import app_commands
 from dotenv import load_dotenv
@@ -9,9 +8,11 @@ from asyncio import sleep
 import asyncio
 from gtts import gTTS
 import json
+from utils.redditpost import randomcopypasta, randomshitpost
 from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls, add_noep, rem_noep
 from utils.trackleave import addScoreLaatsteLeave, Leaderboard
 from utils.nanogpt_utils import getResponse, getAntwoordzonderPrompt
+from utils.scoresUtils import steel, roulette, GenoegPunten, Leaderboard_rng, getdata
 from muziek import muziekspelen
 
 intents = discord.Intents.all()
@@ -262,6 +263,66 @@ async def self(interaction: discord.Interaction, say: str):
     channel = interaction.channel
     await channel.send(say)
 
+async def users_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+) -> list[app_commands.Choice[str]]:
+    server = interaction.guild
+    users = server.members
+    return [
+        app_commands.Choice(name=user.name, value=str(user.id))
+        for user in users if current.lower() in user.name.lower()
+    ]
+
+@app_commands.checks.cooldown(1, 43200.0, key=lambda i: (i.guild_id, i.user.id))
+@tree.command(name="steel", description="steel geld van iemand anders", guild=guild)
+@app_commands.autocomplete(target=users_autocomplete)
+async def self(interaction: discord.Interaction, target: str):
+    isGelukt, puntenerbij = steel(str(interaction.user.id), str(target))
+    if isGelukt:
+        await interaction.response.send_message(f"{interaction.user.mention} heeft zojuist {puntenerbij} euro gestolen van {client.get_user(int(target)).mention}.")
+    elif not isGelukt:
+        await interaction.response.send_message(f"{interaction.user.mention} probeerde zojuist te stelen van {client.get_user(int(target)).mention}, maar heeft gefaald...")
+
+@app_commands.choices(bet_type=[
+        app_commands.Choice(name="Even", value="even"),
+        app_commands.Choice(name="Oneven", value="odd"),
+        app_commands.Choice(name="Getal", value="number")
+        ])
+@app_commands.checks.cooldown(1, 1800.0, key=lambda i: (i.guild_id, i.user.id))
+@tree.command(name="roulette", description="rng certified", guild=guild)
+async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_commands.Choice[str], nummer: int = None):
+    # check if wel genoeg punten
+    data = getdata()
+    if str(interaction.user.id) in data:
+        if not GenoegPunten(str(interaction.user.id), bet_amount):
+            await interaction.response.send_message("Niet genoeg geld.", ephemeral=True)
+            return
+    if bet_type.value == "number":
+        await interaction.response.send_message("Geef ook een nummer op als je op een nummer in wil zetten.", ephemeral=True)
+        return
+    
+    outcome, winnings = roulette(str(interaction.user.id), bet_amount, bet_type.value, nummer)
+    if outcome==0:
+        await interaction.response.send_message(f"De uitkomst was {outcome}, je hebt {bet_amount} euro verloren.")
+    else:
+        await interaction.response.send_message(f"De uitkomst was {outcome}, je hebt {winnings} euro gewonnen.")
+
+@tree.command(name="scorebord_rng_certified", description="rng certified", guild=guild)
+async def self(interaction: discord.Interaction):
+    embed = discord.Embed(title='Beste RNG', color=discord.Colour.random())
+    Scorebord = Leaderboard_rng()
+    nummer = 1
+    for UserID in Scorebord:
+        Score = Scorebord[UserID]
+        User: discord.User = client.get_user(int(UserID))
+        if nummer == 1:
+            embed.set_thumbnail(url=User.avatar)
+        embed.add_field(name=f"{nummer}: {User.name}", value=f"{Score} euro", inline=False)
+        nummer += 1
+
+    await interaction.response.send_message(embed=embed)
+
 @client.event
 async def on_raw_reaction_add(payload):
     if client.user.id == payload.user_id:
@@ -359,5 +420,11 @@ def random_nummer():
     randomnummer = random.choice(os.listdir(dir))
     path = os.path.join(dir, randomnummer)
     return path
+
+@tree.error
+async def on_test_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.CommandOnCooldown):
+        cooldownTijd = int(re.search(r'\d+', str(error)).group())
+        await interaction.response.send_message(f"Command is op cooldown. Probeer nog een keer in {cooldownTijd} seconden.", ephemeral=True)
 
 client.run(TOKEN)
