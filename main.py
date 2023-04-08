@@ -12,7 +12,7 @@ from utils.redditpost import randomcopypasta, randomshitpost
 from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls, add_noep, rem_noep
 from utils.trackleave import addScoreLaatsteLeave, Leaderboard
 from utils.nanogpt_utils import getResponse, getAntwoordzonderPrompt
-from utils.scoresUtils import steel, roulette, GenoegPunten, Leaderboard_rng, getdata
+from utils.scoresUtils import steel, roulette, GenoegPunten, Leaderboard_rng, getdata, getPlayerIDS, CheckIfUserExists, IedereenDieMeedoetIncall, ScoreBijVoorLaatsteLeaven
 from muziek import muziekspelen
 
 intents = discord.Intents.all()
@@ -57,7 +57,8 @@ async def self(interaction: discord.Interaction):
 @app_commands.choices(choices=[
         app_commands.Choice(name="Crab Rave", value="crabrave"),
         app_commands.Choice(name="Epic Outro", value="outro"),
-        app_commands.Choice(name="Royalistiq", value="royalistiq")
+        app_commands.Choice(name="Royalistiq", value="royalistiq"),
+        app_commands.Choice(name="RNG certified", value="rngding")
         ])
 
 @tree.command(name="outro", description="Epic outro", guild=guild)
@@ -76,6 +77,21 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         file = '/outro/royalistiq.mp3'
         source = os.getcwd()+file
         bericht = "HOOWWH MY DAYS 😱"
+
+    elif (choices.value == 'rngding'):
+        voice_channel = interaction.user.voice
+        members = voice_channel.channel.members
+        incall = []
+        for member in members:
+            incall.append(str(member.id))
+
+        if IedereenDieMeedoetIncall(incall):
+            file = '/outro/royalistiq.mp3'
+            source = os.getcwd()+file
+            bericht = "RNG Certified 🍀"
+        else:
+            await interaction.response.send_message("Niet iedereen die meedoet zit in call, dus deze outro kan niet.", ephemeral=True)
+            return
 
     voice_channel = interaction.user.voice
     channel = None
@@ -104,6 +120,15 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         laatste: discord.Member = member_leave_list[0]
         addScoreLaatsteLeave(str(laatste.id), laatste.name)
         await interaction.channel.send(f'{laatste.mention}')
+
+        # rng troep score regelen
+        if choices.value == 'rngding':
+            spelers = getPlayerIDS()
+            if str(laatste.id) in spelers:
+                ScoreBijVoorLaatsteLeaven(str(laatste.id))
+            else:
+                await interaction.channel.send(f'{laatste.mention} doet niet mee, niemand krijgt er dus punten bij.')
+
     else:
         await interaction.response.send_message("Join eerst een spraakkanaal.")
 
@@ -267,8 +292,12 @@ async def users_autocomplete(
     interaction: discord.Interaction,
     current: str,
 ) -> list[app_commands.Choice[str]]:
-    server = interaction.guild
-    users = server.members
+    userIDS = getPlayerIDS()
+    users = []
+    for userID in userIDS:
+        user = client.get_user(int(userID))
+        if not user == interaction.user:
+            users.append(user)
     return [
         app_commands.Choice(name=user.name, value=str(user.id))
         for user in users if current.lower() in user.name.lower()
@@ -278,11 +307,14 @@ async def users_autocomplete(
 @tree.command(name="steel", description="steel geld van iemand anders", guild=guild)
 @app_commands.autocomplete(target=users_autocomplete)
 async def self(interaction: discord.Interaction, target: str):
-    isGelukt, puntenerbij = steel(str(interaction.user.id), str(target))
-    if isGelukt:
-        await interaction.response.send_message(f"{interaction.user.mention} heeft zojuist {puntenerbij} euro gestolen van {client.get_user(int(target)).mention}.")
-    elif not isGelukt:
-        await interaction.response.send_message(f"{interaction.user.mention} probeerde zojuist te stelen van {client.get_user(int(target)).mention}, maar heeft gefaald...")
+    if CheckIfUserExists(target):
+        isGelukt, puntenerbij = steel(str(interaction.user.id), str(target))
+        if isGelukt:
+            await interaction.response.send_message(f"{interaction.user.mention} heeft zojuist {puntenerbij} euro gestolen van {client.get_user(int(target)).mention}.")
+        elif not isGelukt:
+            await interaction.response.send_message(f"{interaction.user.mention} probeerde zojuist te stelen van {client.get_user(int(target)).mention}, maar heeft gefaald...")
+    else:
+        await interaction.response.send_message(f"{target} doet niet mee...", ephemeral=True)
 
 @app_commands.choices(bet_type=[
         app_commands.Choice(name="Even", value="even"),

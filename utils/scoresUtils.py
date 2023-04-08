@@ -27,13 +27,12 @@ def GenoegPunten(userID: str, puntenNodig: int) -> bool:
     else:
         return False
     
-def CheckIfUserExists(UserID: str, data: object) -> object:
+def CheckIfUserExists(UserID: str) -> bool:
+    data = getdata()
     if UserID in data:
-        return data
+        return True
     else:
-        data[UserID] = 10
-        writedata(data)
-        return data
+        return False
     
 def Leaderboard_rng():
     def SortJSON():
@@ -54,11 +53,16 @@ def Leaderboard_rng():
         Leaderboard[UserID] = Userscore
     return Leaderboard
 
+def getPlayerIDS() -> list[str]:
+    data = getdata()
+    playerids = []
+    for playerid in data:
+        playerids.append(playerid)
+    return playerids        
+
 # spel functies
 def steel(userID: str, TargetID: str) -> bool:
     data = getdata()
-    for user in [userID, TargetID]:
-        data = CheckIfUserExists(user, data)
 
     userpunten = data[userID]
     targetpunten = data[TargetID]
@@ -106,7 +110,6 @@ def roulette(userID: str, bet_amount: int, bet_type: str, bet_value):
         return (outcome, winnings)
     
     data = getdata()
-    data = CheckIfUserExists(userID, data)
 
     outcome, winnings = rouletteGame(bet_amount, bet_type, bet_value)
     if winnings>0:
@@ -117,3 +120,18 @@ def roulette(userID: str, bet_amount: int, bet_type: str, bet_value):
         data[userID] = score
     writedata(data)
     return outcome, winnings
+
+def IedereenDieMeedoetIncall(UserIDSincall: list) -> bool:
+    gameSpelers = getPlayerIDS()
+    for gameSpeler in gameSpelers:
+        if gameSpeler in UserIDSincall:
+            continue
+        else:
+            return False
+    return True
+
+def ScoreBijVoorLaatsteLeaven(UserID) -> None:
+    data = getdata()
+    oudescore = data[UserID]
+    data[UserID] = oudescore + 1
+    writedata(data)
