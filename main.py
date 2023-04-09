@@ -106,10 +106,20 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
             kick_tasks.append(kick(member, member_leave_list))
         vc = await voice_channel.connect()
         await interaction.response.send_message(bericht)
+
+        if choices.value == 'rngding':
+            ScoreWaarWeOmspelen = random.randrange(1,50)
+            Positief = random.choice([True, False])
+            if Positief:
+                await interaction.channel.send(f"De outro is +{ScoreWaarWeOmspelen} punten waard.")
+            elif not Positief:
+                await interaction.channel.send(f"De outro is -{ScoreWaarWeOmspelen} punten waard.")
+
         if file == '/outro/outro kort.wav':
             original_message = await interaction.original_response()
             await discord.InteractionMessage.add_reaction(original_message, "👍")
             await discord.InteractionMessage.add_reaction(original_message, "👎")
+
         vc.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=source))
         while vc.is_playing():
             await sleep(0.1)
@@ -125,7 +135,7 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         if choices.value == 'rngding':
             spelers = getPlayerIDS()
             if str(laatste.id) in spelers:
-                ScoreBijVoorLaatsteLeaven(str(laatste.id))
+                ScoreBijVoorLaatsteLeaven(str(laatste.id), ScoreWaarWeOmspelen, Positief)
             else:
                 await interaction.channel.send(f'{laatste.mention} doet niet mee, niemand krijgt er dus punten bij.')
 
@@ -304,15 +314,15 @@ async def users_autocomplete(
     ]
 
 @app_commands.checks.cooldown(1, 43200.0, key=lambda i: (i.guild_id, i.user.id))
-@tree.command(name="steel", description="steel geld van iemand anders", guild=guild)
+@tree.command(name="steel", description="steel punten van iemand anders", guild=guild)
 @app_commands.autocomplete(target=users_autocomplete)
 async def self(interaction: discord.Interaction, target: str):
     if CheckIfUserExists(target):
         isGelukt, puntenerbij = steel(str(interaction.user.id), str(target))
         if isGelukt:
-            await interaction.response.send_message(f"{interaction.user.mention} heeft zojuist {puntenerbij} euro gestolen van {client.get_user(int(target)).mention}.")
+            await interaction.response.send_message(f"{interaction.user.mention} heeft zojuist {puntenerbij} punten gestolen van {client.get_user(int(target)).mention}.")
         elif not isGelukt:
-            await interaction.response.send_message(f"{interaction.user.mention} probeerde zojuist te stelen van {client.get_user(int(target)).mention}, maar heeft gefaald...")
+            await interaction.response.send_message(f"{interaction.user.mention} probeerde zojuist te stelen van {client.get_user(int(target)).mention}, maar heeft gefaald. Nu moet hij een boete betalen van {puntenerbij} punten.")
     else:
         await interaction.response.send_message(f"{target} doet niet mee...", ephemeral=True)
 
@@ -324,21 +334,27 @@ async def self(interaction: discord.Interaction, target: str):
 @app_commands.checks.cooldown(1, 1800.0, key=lambda i: (i.guild_id, i.user.id))
 @tree.command(name="roulette", description="rng certified", guild=guild)
 async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_commands.Choice[str], nummer: int = None):
+    if bet_amount <= 0:
+        await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
+        return
+    
     # check if wel genoeg punten
     data = getdata()
     if str(interaction.user.id) in data:
         if not GenoegPunten(str(interaction.user.id), bet_amount):
-            await interaction.response.send_message("Niet genoeg geld.", ephemeral=True)
+            await interaction.response.send_message("Niet genoeg punten.", ephemeral=True)
             return
     if bet_type.value == "number":
         await interaction.response.send_message("Geef ook een nummer op als je op een nummer in wil zetten.", ephemeral=True)
         return
     
     outcome, winnings = roulette(str(interaction.user.id), bet_amount, bet_type.value, nummer)
-    if outcome==0:
-        await interaction.response.send_message(f"De uitkomst was {outcome}, je hebt {bet_amount} euro verloren.")
+    if winnings==0:
+        await interaction.response.send_message(f"De uitkomst was {outcome}, je hebt {bet_amount} punten verloren.")
     else:
-        await interaction.response.send_message(f"De uitkomst was {outcome}, je hebt {winnings} euro gewonnen.")
+        await interaction.response.send_message(f"De uitkomst was {outcome}, je hebt {winnings} punten gewonnen.")
+    if not nummer == None:
+        await interaction.channel.send(f"{interaction.user.mention} had ingezet op {nummer}")
 
 @tree.command(name="scorebord_rng_certified", description="rng certified", guild=guild)
 async def self(interaction: discord.Interaction):
@@ -350,7 +366,7 @@ async def self(interaction: discord.Interaction):
         User: discord.User = client.get_user(int(UserID))
         if nummer == 1:
             embed.set_thumbnail(url=User.avatar)
-        embed.add_field(name=f"{nummer}: {User.name}", value=f"{Score} euro", inline=False)
+        embed.add_field(name=f"{nummer}: {User.name}", value=f"{Score} punten", inline=False)
         nummer += 1
 
     await interaction.response.send_message(embed=embed)

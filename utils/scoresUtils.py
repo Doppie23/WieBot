@@ -67,25 +67,28 @@ def steel(userID: str, TargetID: str) -> bool:
     userpunten = data[userID]
     targetpunten = data[TargetID]
 
-    # steels met weight van eigen punten
-    # en als je wint krijg je deel klein/grote erbij
     winnaarID = random.choices(
         population=[userID, TargetID],
-        weights=[userpunten, targetpunten]
+        weights=[targetpunten, userpunten] # bij weinig punten heb je nu meer kans om te winnen
     )[0]
     
+    if userpunten>=targetpunten:
+        puntenFraction = round(targetpunten/userpunten, 2)
+    else:
+        puntenFraction = round(userpunten/targetpunten, 2)
+    puntenFraction = 1 - puntenFraction # om het systeem om te draaien, als je veel punten heb steel je minder van kleine spelers
+
+    puntenErbij = round(data[TargetID]*puntenFraction)
+    puntenErbij = round(puntenErbij * 0.3)
+
     if winnaarID == userID: # steel gelukt
-        verliezerID = TargetID
-        if userpunten>=targetpunten:
-            puntenFraction = round(targetpunten/userpunten, 2)
-        else:
-            puntenFraction = round(userpunten/targetpunten, 2)
-        puntenErbij = round(data[verliezerID]*puntenFraction)
         setPunten(winnaarID, data[winnaarID]+puntenErbij)
-        setPunten(verliezerID, data[verliezerID]-puntenErbij)
+        setPunten(TargetID, data[TargetID]-puntenErbij)
         return True, puntenErbij
-    else: # steel mislukt
-        return False, 0
+    else: # steel mislukt, en dus als boete 2x wat je zou hebben gestolen
+        boete = puntenErbij * 2
+        setPunten(userID, data[userID]-boete)
+        return False, boete
     
 def roulette(userID: str, bet_amount: int, bet_type: str, bet_value):
     def rouletteGame(bet_amount: int, bet_type: str, bet_value):
@@ -130,8 +133,11 @@ def IedereenDieMeedoetIncall(UserIDSincall: list) -> bool:
             return False
     return True
 
-def ScoreBijVoorLaatsteLeaven(UserID) -> None:
+def ScoreBijVoorLaatsteLeaven(UserID, score: int, Positief: bool) -> None:
     data = getdata()
     oudescore = data[UserID]
-    data[UserID] = oudescore + 1
+    if Positief:
+        data[UserID] = oudescore + score
+    elif not Positief:
+        data[UserID] = oudescore - score
     writedata(data)
