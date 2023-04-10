@@ -27,6 +27,15 @@ def GenoegPunten(userID: str, puntenNodig: int) -> bool:
     else:
         return False
     
+def ScoreBijVoorLaatsteLeaven(UserID, score: int, Positief: bool) -> None:
+    data = getdata()
+    oudescore = data[UserID]
+    if Positief:
+        data[UserID] = oudescore + score
+    elif not Positief:
+        data[UserID] = oudescore - score
+    writedata(data)
+    
 def CheckIfUserExists(UserID: str) -> bool:
     data = getdata()
     if UserID in data:
@@ -58,7 +67,16 @@ def getPlayerIDS() -> list[str]:
     playerids = []
     for playerid in data:
         playerids.append(playerid)
-    return playerids        
+    return playerids
+
+def IedereenDieMeedoetIncall(UserIDSincall: list) -> bool:
+    gameSpelers = getPlayerIDS()
+    for gameSpeler in gameSpelers:
+        if gameSpeler in UserIDSincall:
+            continue
+        else:
+            return False
+    return True     
 
 # spel functies
 def steel(userID: str, TargetID: str) -> bool:
@@ -66,6 +84,10 @@ def steel(userID: str, TargetID: str) -> bool:
 
     userpunten = data[userID]
     targetpunten = data[TargetID]
+    if userpunten < 0:
+        userpunten = 0
+    if targetpunten < 0:
+        targetpunten = 0
 
     winnaarID = random.choices(
         population=[userID, TargetID],
@@ -124,20 +146,23 @@ def roulette(userID: str, bet_amount: int, bet_type: str, bet_value):
     writedata(data)
     return outcome, winnings
 
-def IedereenDieMeedoetIncall(UserIDSincall: list) -> bool:
-    gameSpelers = getPlayerIDS()
-    for gameSpeler in gameSpelers:
-        if gameSpeler in UserIDSincall:
-            continue
-        else:
-            return False
-    return True
-
-def ScoreBijVoorLaatsteLeaven(UserID, score: int, Positief: bool) -> None:
+def trinna(UserID: str, bet_amount: int):
     data = getdata()
-    oudescore = data[UserID]
-    if Positief:
-        data[UserID] = oudescore + score
-    elif not Positief:
-        data[UserID] = oudescore - score
+    # punten eraf
+    data[UserID] -= bet_amount
+
+    dobbel_opties = ["🚂", "🚿", "💡", "🛂", "🚗", "💍"]
+
+    uitkomsten = []
+    for _ in range(3):
+        uitkomst = random.choice(dobbel_opties)
+        uitkomsten.append(uitkomst)
+    
+    aantalKeerTrein = uitkomsten.count("🚂")
+    if aantalKeerTrein>0:
+        bet_winst = bet_amount*(2*aantalKeerTrein)
+        data[UserID] += bet_winst
+    else:
+        bet_winst = 0
     writedata(data)
+    return uitkomsten, bet_winst

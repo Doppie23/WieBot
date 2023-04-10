@@ -1,6 +1,7 @@
 import os
 import random
 import re
+import traceback
 import discord
 from discord import app_commands
 from dotenv import load_dotenv
@@ -12,7 +13,8 @@ from utils.redditpost import randomcopypasta, randomshitpost
 from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls, add_noep, rem_noep
 from utils.trackleave import addScoreLaatsteLeave, Leaderboard
 from utils.nanogpt_utils import getResponse, getAntwoordzonderPrompt
-from utils.scoresUtils import steel, roulette, GenoegPunten, Leaderboard_rng, getdata, getPlayerIDS, CheckIfUserExists, IedereenDieMeedoetIncall, ScoreBijVoorLaatsteLeaven
+from utils.scoresUtils import steel, roulette, GenoegPunten, Leaderboard_rng, getdata, getPlayerIDS, CheckIfUserExists, IedereenDieMeedoetIncall, ScoreBijVoorLaatsteLeaven, getPunten, trinna
+from utils.embeds import embedTrinna
 from muziek import muziekspelen
 
 intents = discord.Intents.all()
@@ -109,7 +111,10 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
 
         if choices.value == 'rngding':
             ScoreWaarWeOmspelen = random.randrange(1,50)
-            Positief = random.choice([True, False])
+            Positief = random.choices(
+                                population=[True, False],
+                                weights=[3,1]
+                            )[0]
             if Positief:
                 await interaction.channel.send(f"De outro is +{ScoreWaarWeOmspelen} punten waard.")
             elif not Positief:
@@ -156,7 +161,7 @@ async def self(interaction: discord.Interaction):
         User: discord.User = client.get_user(int(UserID))
         if nummer == 1:
             embed.set_thumbnail(url=User.avatar)
-        embed.add_field(name=f"{nummer}: {User.name}", value=f"{Score} keer", inline=False)
+        embed.add_field(name=f"{nummer}: {User.display_name}", value=f"{Score} keer", inline=False)
         nummer += 1
 
     await interaction.response.send_message(embed=embed)
@@ -317,7 +322,14 @@ async def users_autocomplete(
 @tree.command(name="steel", description="steel punten van iemand anders", guild=guild)
 @app_commands.autocomplete(target=users_autocomplete)
 async def self(interaction: discord.Interaction, target: str):
+    if CheckIfUserExists(str(interaction.user.id)):
+        await interaction.response.send_message(f"Je doet niet mee aan het spel.", ephemeral=True)
+        return
     if CheckIfUserExists(target):
+        if getPunten(str(target)) <= 0:
+            await interaction.response.send_message(f"Je kan niet stelen van iemand met nul of minder punten.", ephemeral=True)
+            return
+                
         isGelukt, puntenerbij = steel(str(interaction.user.id), str(target))
         if isGelukt:
             await interaction.response.send_message(f"{interaction.user.mention} heeft zojuist {puntenerbij} punten gestolen van {client.get_user(int(target)).mention}.")
@@ -344,7 +356,13 @@ async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_
         if not GenoegPunten(str(interaction.user.id), bet_amount):
             await interaction.response.send_message("Niet genoeg punten.", ephemeral=True)
             return
-    if bet_type.value == "number":
+    else:
+        await interaction.response.send_message("Je doet niet mee aan het spel.", ephemeral=True)
+        return
+    if bet_type.value!="number" and nummer!=None:
+        await interaction.response.send_message("Je kan niet een nummer opgeven als je niet op een nummer in wil zetten.", ephemeral=True)
+        return
+    if bet_type.value == "number" and nummer==None:
         await interaction.response.send_message("Geef ook een nummer op als je op een nummer in wil zetten.", ephemeral=True)
         return
     
@@ -356,6 +374,25 @@ async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_
     if not nummer == None:
         await interaction.channel.send(f"{interaction.user.mention} had ingezet op {nummer}")
 
+@app_commands.checks.cooldown(1, 1800.0, key=lambda i: (i.guild_id, i.user.id))
+@tree.command(name="trinna", description="trinna is altijd goed", guild=guild)
+async def self(interaction: discord.Interaction, bet_amount: int):
+    if bet_amount <= 0:
+        await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
+        return
+    data = getdata()
+    if str(interaction.user.id) in data:
+        if not GenoegPunten(str(interaction.user.id), bet_amount):
+            await interaction.response.send_message("Niet genoeg punten.", ephemeral=True)
+            return
+    else:
+        await interaction.response.send_message("Je doet niet mee aan het spel.", ephemeral=True)
+        return
+    
+    uitkomsten, bet_winst = trinna(str(interaction.user.id), bet_amount)
+    embed = embedTrinna(interaction, bet_winst, bet_amount, uitkomsten)
+    await interaction.response.send_message(embed=embed)
+
 @tree.command(name="scorebord_rng_certified", description="rng certified", guild=guild)
 async def self(interaction: discord.Interaction):
     embed = discord.Embed(title='Beste RNG', color=discord.Colour.random())
@@ -366,7 +403,7 @@ async def self(interaction: discord.Interaction):
         User: discord.User = client.get_user(int(UserID))
         if nummer == 1:
             embed.set_thumbnail(url=User.avatar)
-        embed.add_field(name=f"{nummer}: {User.name}", value=f"{Score} punten", inline=False)
+        embed.add_field(name=f"{nummer}: {User.display_name}", value=f"{Score} punten", inline=False)
         nummer += 1
 
     await interaction.response.send_message(embed=embed)
@@ -474,5 +511,8 @@ async def on_test_error(interaction: discord.Interaction, error: app_commands.Ap
     if isinstance(error, app_commands.CommandOnCooldown):
         cooldownTijd = int(re.search(r'\d+', str(error)).group())
         await interaction.response.send_message(f"Command is op cooldown. Probeer nog een keer in {cooldownTijd} seconden.", ephemeral=True)
+    else:
+        print(error)
+        traceback.print_exc()
 
 client.run(TOKEN)
