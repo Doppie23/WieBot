@@ -14,7 +14,7 @@ from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meest
 from utils.trackleave import addScoreLaatsteLeave, Leaderboard
 from utils.nanogpt_utils import getResponse, getAntwoordzonderPrompt
 from utils.scoresUtils import steel, roulette, GenoegPunten, Leaderboard_rng, getdata, getPlayerIDS, CheckIfUserExists, IedereenDieMeedoetIncall, ScoreBijVoorLaatsteLeaven, getPunten, trinna
-from utils.embeds import embedTrinna
+from utils.embeds import embedTrinna, embedRoulette
 from muziek import muziekspelen
 
 intents = discord.Intents.all()
@@ -322,7 +322,7 @@ async def users_autocomplete(
 @tree.command(name="steel", description="steel punten van iemand anders", guild=guild)
 @app_commands.autocomplete(target=users_autocomplete)
 async def self(interaction: discord.Interaction, target: str):
-    if CheckIfUserExists(str(interaction.user.id)):
+    if not CheckIfUserExists(str(interaction.user.id)):
         await interaction.response.send_message(f"Je doet niet mee aan het spel.", ephemeral=True)
         return
     if CheckIfUserExists(target):
@@ -367,12 +367,8 @@ async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_
         return
     
     outcome, winnings = roulette(str(interaction.user.id), bet_amount, bet_type.value, nummer)
-    if winnings==0:
-        await interaction.response.send_message(f"De uitkomst was {outcome}, je hebt {bet_amount} punten verloren.")
-    else:
-        await interaction.response.send_message(f"De uitkomst was {outcome}, je hebt {winnings} punten gewonnen.")
-    if not nummer == None:
-        await interaction.channel.send(f"{interaction.user.mention} had ingezet op {nummer}")
+    embed = embedRoulette(interaction, outcome, winnings, bet_amount, bet_type.name, nummer)
+    await interaction.response.send_message(embed=embed)
 
 @app_commands.checks.cooldown(1, 1800.0, key=lambda i: (i.guild_id, i.user.id))
 @tree.command(name="trinna", description="trinna is altijd goed", guild=guild)
@@ -486,11 +482,6 @@ async def on_voice_state_update(member: discord.User, before: discord.VoiceState
     if before.channel == after.channel:
         return
     if before.channel != after.channel:
-        # fix bug voor already connect
-        voices = client.voice_clients
-        for connection in voices:
-            await connection.disconnect()
-
         source = random_nummer()
         voice_channel = after.channel
         vc = await voice_channel.connect()
