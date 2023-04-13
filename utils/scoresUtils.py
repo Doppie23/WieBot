@@ -166,3 +166,46 @@ def trinna(UserID: str, bet_amount: int):
         bet_winst = 0
     writedata(data)
     return uitkomsten, bet_winst
+
+class luckywheel:
+    def __init__(self, RangeGetallen) -> None:
+        self.begin, self.eind = RangeGetallen
+        self.opties = self._geneRandomArray()
+
+    def _geneRandomArray(self):
+        array = []
+        for _ in range(3):
+            nummer = random.randrange(self.begin, self.eind)
+            nummer = self._randomnegatief(nummer)
+            array.append(nummer)
+        return array
+    
+    def _randomnegatief(self, getal):
+        Positief = random.choices(
+                    population=[True, False],
+                    weights=[3,1]
+                )[0]
+        if Positief:
+            pass
+        else:
+            getal = getal-2*getal # getal negatief maken
+        return getal
+
+    def _RandomNieuweGetal(self):
+        getal = random.randint(self.begin, self.eind)
+        getal = self._randomnegatief(getal)
+        return getal
+    
+    def VoegGetalToe(self):
+        getal = self._RandomNieuweGetal()
+        self.opties.insert(0,getal)
+
+    def getDrieNummers(self):
+        nummer1 = self.opties[0]
+        nummer2 = self.opties[1]
+        nummer3 = self.opties[2]
+        self.VoegGetalToe()
+        return nummer1, nummer2, nummer3
+    
+    def getPunten(self) -> int:
+        return self.opties[2]
