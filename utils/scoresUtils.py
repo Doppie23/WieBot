@@ -1,6 +1,8 @@
 import json
 import random
 
+import discord
+
 # standaard json functies
 def getdata() -> object:
     with open("scores/scores.json") as f:
@@ -175,7 +177,7 @@ class luckywheel:
     def _geneRandomArray(self):
         array = []
         for _ in range(3):
-            nummer = random.randrange(self.begin, self.eind)
+            nummer = random.randrange(self.begin, self.eind, step=5)
             nummer = self._randomnegatief(nummer)
             array.append(nummer)
         return array
@@ -183,7 +185,7 @@ class luckywheel:
     def _randomnegatief(self, getal):
         Positief = random.choices(
                     population=[True, False],
-                    weights=[3,1]
+                    weights=[9,1]
                 )[0]
         if Positief:
             pass
@@ -209,3 +211,138 @@ class luckywheel:
     
     def getPunten(self) -> int:
         return self.opties[2]
+
+class BlackJack(discord.ui.View):
+    def __init__(self, *, timeout = 180, inzet, interaction: discord.Interaction):
+        super().__init__(timeout=timeout)
+        self.inzet = inzet
+        self.knopBeschikbaar = True
+        self.interaction = interaction
+
+        self.Spelernaam = interaction.user.display_name
+
+        # initialize deck
+        suits = ["♥️", "♦️", "♣️", "♠️"]
+        values = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
+        self.deck = [value + suit for suit in suits for value in values]
+        random.shuffle(self.deck)
+
+        # initialize player and dealer hands
+        self.player_hand = [self.deck.pop(), self.deck.pop()]
+        self.dealer_hand = [self.deck.pop(), self.deck.pop()]
+
+        self.DealerHandHidden = [self.dealer_hand[0]]
+
+        self.winner = None
+        
+    async def PlayerTurn(self, action: str):
+        self.knopBeschikbaar = False
+        if action.lower() == "hit":
+            self.player_hand.append(self.deck.pop())
+            await self.UpdateBericht(f"{self.Spelernaam} hits.")
+            if self.sum_card_values(self.player_hand) > 21:
+                self.winner = "Dealer"
+                await self.UpdateBericht(f"{self.Spelernaam} busts. Dealer wins.")
+                self.RegelPunten()
+                return
+            await self.UpdateBericht("Hit of stand?")
+            self.knopBeschikbaar = True
+        elif action.lower() == "stand":
+            await self.UpdateBericht(f"{self.Spelernaam} stands.")
+            await self.DealerTurn()
+            await self.DetermineWinner()
+
+    async def DealerTurn(self):
+        while self.sum_card_values(self.dealer_hand) < 17:
+            self.dealer_hand.append(self.deck.pop())
+            self.DealerHandHidden = self.dealer_hand
+            await self.UpdateBericht("Dealer hits.")            
+            if self.sum_card_values(self.dealer_hand) > 21:
+                self.winner = "Player"
+                await self.UpdateBericht(f"Dealer is gebust. {self.Spelernaam} wint.")
+                self.RegelPunten()
+                return
+            
+    async def DetermineWinner(self):
+        player_score = self.sum_card_values(self.player_hand)
+        dealer_score = self.sum_card_values(self.dealer_hand)
+        if self.winner == None: # nog niemand gebust
+            if player_score > dealer_score:
+                self.winner = "Player"
+                await self.UpdateBericht(f"{self.Spelernaam} wint!")
+            elif player_score < dealer_score:
+                self.winner = "Dealer"
+                await self.UpdateBericht("Dealer wint!")
+            else:
+                self.winner = "niemand"
+                await self.UpdateBericht("Het is een gelijkspel!")
+            self.RegelPunten()
+
+    def RegelPunten(self):
+        data = getdata()
+        if self.winner == "Player":
+            data[str(self.interaction.user.id)] += self.inzet
+        elif self.winner == "niemand":
+            pass
+        else:
+            data[str(self.interaction.user.id)] -= self.inzet
+        writedata(data)
+
+    def sum_card_values(self, hand):
+        values = {"2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "J": 10, "Q": 10, "K": 10, "A": 11}
+        total = 0
+        num_aces = 0
+        for card in hand:
+            value = card[:-2]
+            if value == "A":
+                num_aces += 1
+            total += values[value]
+        while total > 21 and num_aces > 0:
+            total -= 10
+            num_aces -= 1
+        return total
+    
+    async def UpdateBericht(self, actie:str):
+        embed = self.GenerateEmbed()
+        embed.add_field(name="", value=actie, inline=False)
+        message = await self.interaction.original_response()
+        await message.edit(embed=embed)
+    
+    def GenerateEmbed(self):
+        def HandToString(hand):
+            string = ""
+            i = 0
+            while i <= len(hand) - 1:
+                if i == (len(hand)-1):
+                    string += f"{hand[i]}"
+                else:
+                    string += f"{hand[i]},⠀"
+                i+=1
+            return string
+        embed = discord.Embed(title=f'Blackjack', description=f"{self.interaction.user.display_name} heeft {self.inzet} punten ingezet.", color=discord.Colour.brand_red())
+        embed.add_field(name="Player hand", value=HandToString(self.player_hand), inline=False)
+        if self.winner == None:
+            Dealerhand = self.DealerHandHidden
+        else:
+            Dealerhand = self.dealer_hand
+        embed.add_field(name="Dealer hand", value=HandToString(Dealerhand), inline=False)
+            
+        return embed
+
+    @discord.ui.button(label="Hit", style=discord.ButtonStyle.primary)
+    async def Hit(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.display_name == self.Spelernaam:
+            if self.knopBeschikbaar:
+                await self.PlayerTurn("hit")
+            await interaction.response.defer()
+        else:
+            await interaction.channel.send("Gsat rot op", ephemeral=True)
+        
+    @discord.ui.button(label="Stand", style=discord.ButtonStyle.secondary)
+    async def Stand(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.display_name == self.Spelernaam:
+            if self.knopBeschikbaar:
+                await self.PlayerTurn("stand")
+            await interaction.response.defer()
+        else:
+            await interaction.channel.send("Gsat rot op", ephemeral=True)

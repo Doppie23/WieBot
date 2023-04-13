@@ -13,7 +13,7 @@ from utils.redditpost import randomcopypasta, randomshitpost
 from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls, add_noep, rem_noep
 from utils.trackleave import addScoreLaatsteLeave, Leaderboard
 from utils.nanogpt_utils import getResponse, getAntwoordzonderPrompt
-from utils.scoresUtils import luckywheel, steel, roulette, GenoegPunten, Leaderboard_rng, getdata, getPlayerIDS, CheckIfUserExists, IedereenDieMeedoetIncall, ScoreBijVoorLaatsteLeaven, getPunten, trinna, writedata
+from utils.scoresUtils import BlackJack, luckywheel, steel, roulette, GenoegPunten, Leaderboard_rng, getdata, getPlayerIDS, CheckIfUserExists, IedereenDieMeedoetIncall, ScoreBijVoorLaatsteLeaven, getPunten, trinna, writedata
 from utils.embeds import embedLuckyWheel, embedTrinna, embedRoulette
 from muziek import muziekspelen
 
@@ -392,22 +392,45 @@ async def self(interaction: discord.Interaction, bet_amount: int):
 @app_commands.checks.cooldown(1, 43200.0, key=lambda i: (i.guild_id, i.user.id))
 @tree.command(name="luckywheel", description="Altijd prijs!!!", guild=guild)
 async def self(interaction: discord.Interaction):
-    wheel = luckywheel([1,50])
-    embed= embedLuckyWheel(wheel)
-    await interaction.response.send_message(embed=embed)
-    sleeptime = 0.1
-    for _ in range(8):
-        await asyncio.sleep(sleeptime)
-        embed= embedLuckyWheel(wheel)
-        message = await interaction.original_response()
-        await message.edit(embed=embed)
-        sleeptime += 0.05
-    punten = wheel.getPunten()
-    await interaction.channel.send(f"Je hebt {punten} punten gewonnen.")
     data = getdata()
-    userid = str(interaction.user.id)
-    data[userid] += punten
-    writedata(data)
+    if str(interaction.user.id) in data:
+        wheel = luckywheel([1,50])
+        embed= embedLuckyWheel(wheel)
+        await interaction.response.send_message(embed=embed)
+        sleeptime = 0.1
+        for _ in range(8):
+            await asyncio.sleep(sleeptime)
+            embed= embedLuckyWheel(wheel)
+            message = await interaction.original_response()
+            await message.edit(embed=embed)
+            sleeptime += 0.05
+        punten = wheel.getPunten()
+        await interaction.channel.send(f"Je hebt {punten} punten gewonnen.")
+        data = getdata()
+        userid = str(interaction.user.id)
+        data[userid] += punten
+        writedata(data)
+    else:
+        await interaction.response.send_message("Je doet niet mee aan het spel.", ephemeral=True)
+        return
+
+@app_commands.checks.cooldown(1, 300.0, key=lambda i: (i.guild_id, i.user.id))
+@tree.command(name="blackjack", description="Unlimited Money Glitch 100% WORKING!!1!", guild=guild)
+async def self(interaction: discord.Interaction, bet_amount: int):
+    if bet_amount <= 0:
+        await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
+        return
+    data = getdata()
+    if str(interaction.user.id) in data:
+        if not GenoegPunten(str(interaction.user.id), bet_amount):
+            await interaction.response.send_message("Niet genoeg punten.", ephemeral=True)
+            return
+    else:
+        await interaction.response.send_message("Je doet niet mee aan het spel.", ephemeral=True)
+        return
+    blackjack = BlackJack(inzet=bet_amount, interaction=interaction)
+    await interaction.response.send_message(view=blackjack)
+    await blackjack.UpdateBericht("Hit of stand?")
 
 @tree.command(name="scorebord_rng_certified", description="rng certified", guild=guild)
 async def self(interaction: discord.Interaction):
