@@ -35,3 +35,17 @@ def embedLuckyWheel(Luckywheel):
             value = "🔹"
         embed.add_field(name=f"{nummers[i]}", value=value, inline=True)
     return embed
+
+def GenPaardenEmbed(paarden: list, username, paardinzet, punteninzet):
+    embed = discord.Embed(title=f'Paarden Race', color=discord.Colour.dark_green(), description=f"{username} heeft {punteninzet} punten ingezet op {paardinzet.value}")
+    paarden.sort(key=lambda x: x.PercentageDone, reverse=True)
+    positie = 1
+    for paard in paarden:
+        value = f"{paard.PercentageDone}%"
+        if paard.finished:
+            value += " 🏁"
+        ratio = paard.ratioProbs
+        name = f"{positie} - 🐴 {paard.naam} | {ratio[0]}/{ratio[1]}"
+        positie +=1
+        embed.add_field(name=name, value=value, inline=False)
+    return embed

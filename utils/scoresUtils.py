@@ -1,7 +1,9 @@
+import asyncio
 import json
 import random
-
 import discord
+
+from utils.embeds import GenPaardenEmbed
 
 # standaard json functies
 def getdata() -> object:
@@ -194,7 +196,7 @@ class luckywheel:
         return getal
 
     def _RandomNieuweGetal(self):
-        getal = random.randint(self.begin, self.eind)
+        getal = random.randrange(self.begin, self.eind, step=5)
         getal = self._randomnegatief(getal)
         return getal
     
@@ -242,7 +244,7 @@ class BlackJack(discord.ui.View):
             await self.UpdateBericht(f"{self.Spelernaam} hits.")
             if self.sum_card_values(self.player_hand) > 21:
                 self.winner = "Dealer"
-                await self.UpdateBericht(f"{self.Spelernaam} busts. Dealer wins.")
+                await self.UpdateBericht(f"{self.Spelernaam} is gebust. Dealer wint.")
                 self.RegelPunten()
                 return
             await self.UpdateBericht("Hit of stand?")
@@ -346,3 +348,49 @@ class BlackJack(discord.ui.View):
             await interaction.response.defer()
         else:
             await interaction.channel.send("Gsat rot op", ephemeral=True)
+
+class Horse:
+    def __init__(self, probability: float, naam: str) -> None:
+        self.probability = probability
+        self.ratioProbs = probability.as_integer_ratio()
+        self.PercentageDone = 0
+        self.finished = False
+        self.naam = naam
+
+    def MoveForward(self) -> None:
+        rand_distance = random.random()
+        distance = rand_distance*10 + self._randomBonus()
+        self.PercentageDone = round((self.PercentageDone + distance), 1)
+        self._CheckFinished()
+
+    def _randomBonus(self):
+        ratio = self.ratioProbs
+        kans = [False]*ratio[1]
+        for i in range(ratio[0]):
+            kans[i-1] = True
+        isBonus = random.choice(kans)
+        if isBonus:
+            return ratio[1]*0.1
+        else:
+            return 0.0
+
+    def _CheckFinished(self) -> None:
+        if self.PercentageDone >= 100:
+            self.PercentageDone = 100
+            self.finished = True
+        else:
+            pass
+
+async def HorseGame(paarden: list[Horse], interaction: discord.Interaction, username, paardinzet, punteninzet):
+    message = await interaction.original_response()
+    while True:
+        for paard in paarden:
+            paard.MoveForward()
+            if paard.finished:
+                embed = GenPaardenEmbed(paarden, username, paardinzet, punteninzet)
+                message = await interaction.original_response()
+                await message.edit(embed=embed)
+                return paard
+        embed = GenPaardenEmbed(paarden, username, paardinzet, punteninzet)
+        await message.edit(embed=embed)
+        await asyncio.sleep(1)
