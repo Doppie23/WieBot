@@ -10,21 +10,6 @@ def embedTrinna(interaction: discord.Interaction, bet_winst: int, bet_amount: in
         embed.add_field(name="🎲", value=f"{uitkomst}", inline=True)
     return embed
 
-def embedRoulette(interaction: discord.Interaction, outcome, winnings, bet_amount, bet_type_name, nummer):
-    embed = discord.Embed(title=f'Roulette', color=discord.Colour.red(), description=f"{interaction.user.display_name} heeft ingezet op ")
-    if nummer!=None:
-        embed.description += f"nummer {nummer}."
-    else:
-        embed.description += f"{bet_type_name}."
-
-    if winnings==0:
-        value = f"Je hebt {bet_amount} punten verloren"
-    else:
-        embed.color = discord.Colour.green()
-        value = f"Je hebt {winnings} punten gewonnen."
-    embed.add_field(name=f"🎲 De uitkomst was {outcome}", value=value, inline=False)
-    return embed
-
 def embedLuckyWheel(Luckywheel):
     embed = discord.Embed(title=f'Lucky Wheel', color=discord.Colour.blue())
     nummers = Luckywheel.getDrieNummers()
@@ -34,18 +19,4 @@ def embedLuckyWheel(Luckywheel):
         else:
             value = "🔹"
         embed.add_field(name=f"{nummers[i]}", value=value, inline=True)
-    return embed
-
-def GenPaardenEmbed(paarden: list, username, paardinzet, punteninzet):
-    embed = discord.Embed(title=f'Paarden Race', color=discord.Colour.dark_green(), description=f"{username} heeft {punteninzet} punten ingezet op {paardinzet.value}")
-    paarden.sort(key=lambda x: x.PercentageDone, reverse=True)
-    positie = 1
-    for paard in paarden:
-        value = f"{paard.PercentageDone}%"
-        if paard.finished:
-            value += " 🏁"
-        ratio = paard.ratioProbs
-        name = f"{positie} - 🐴 {paard.naam} | {ratio[0]}/{ratio[1]}"
-        positie +=1
-        embed.add_field(name=name, value=value, inline=False)
     return embed

@@ -9,12 +9,13 @@ from asyncio import sleep
 import asyncio
 from gtts import gTTS
 import json
+from utils.paarden_utils import Horse, MultiplayerPaarden
 from utils.redditpost import randomcopypasta, randomshitpost
 from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls, add_noep, rem_noep
 from utils.trackleave import addScoreLaatsteLeave, Leaderboard
 from utils.nanogpt_utils import getResponse, getAntwoordzonderPrompt
-from utils.scoresUtils import BlackJack, Horse, HorseGame, luckywheel, steel, roulette, GenoegPunten, Leaderboard_rng, getdata, getPlayerIDS, CheckIfUserExists, IedereenDieMeedoetIncall, ScoreBijVoorLaatsteLeaven, getPunten, trinna, writedata
-from utils.embeds import GenPaardenEmbed, embedLuckyWheel, embedTrinna, embedRoulette
+from utils.scoresUtils import BlackJack, RouletteDoubleOrNothingVraag, luckywheel, steel, roulette, GenoegPunten, Leaderboard_rng, getdata, getPlayerIDS, CheckIfUserExists, IedereenDieMeedoetIncall, ScoreBijVoorLaatsteLeaven, getPunten, trinna, writedata, embedRoulette
+from utils.embeds import embedLuckyWheel, embedTrinna
 from muziek import muziekspelen
 
 intents = discord.Intents.all()
@@ -110,10 +111,10 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         await interaction.response.send_message(bericht)
 
         if choices.value == 'rngding':
-            ScoreWaarWeOmspelen = random.randrange(1,50)
+            ScoreWaarWeOmspelen = random.randrange(1,100)
             Positief = random.choices(
                                 population=[True, False],
-                                weights=[3,1]
+                                weights=[9,1]
                             )[0]
             if Positief:
                 await interaction.channel.send(f"De outro is +{ScoreWaarWeOmspelen} punten waard.")
@@ -369,6 +370,10 @@ async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_
     outcome, winnings = roulette(str(interaction.user.id), bet_amount, bet_type.value, nummer)
     embed = embedRoulette(interaction, outcome, winnings, bet_amount, bet_type.name, nummer)
     await interaction.response.send_message(embed=embed)
+    if winnings != 0:
+        bet_amount += winnings
+        DoubleRouletteVraag = RouletteDoubleOrNothingVraag(interaction=interaction, bet_amount=bet_amount)
+        await interaction.channel.send(f"Double or nothing met {bet_amount} punten?", view=DoubleRouletteVraag)
 
 @app_commands.checks.cooldown(1, 1800.0, key=lambda i: (i.guild_id, i.user.id))
 @tree.command(name="trinna", description="trinna is altijd goed", guild=guild)
@@ -394,7 +399,7 @@ async def self(interaction: discord.Interaction, bet_amount: int):
 async def self(interaction: discord.Interaction):
     data = getdata()
     if str(interaction.user.id) in data:
-        wheel = luckywheel([0,50])
+        wheel = luckywheel([5,100])
         embed= embedLuckyWheel(wheel)
         await interaction.response.send_message(embed=embed)
         sleeptime = 0.1
@@ -432,16 +437,34 @@ async def self(interaction: discord.Interaction, bet_amount: int):
     await interaction.response.send_message(view=blackjack)
     await blackjack.UpdateBericht("Hit of stand?")
 
-@app_commands.choices(paard=[
-        app_commands.Choice(name="🐴 Rappe Riko | 1/4", value="Rappe Riko"),
-        app_commands.Choice(name="🐴 Leunie(Mike) | 1/2", value="Leunie(Mike)"),
-        app_commands.Choice(name="🐴 Bartholomeus | 1/16", value="Bartholomeus"),
-        app_commands.Choice(name="🐴 Trappelende Titus | 1/8", value="Trappelende Titus"),
-        app_commands.Choice(name="🐴 Karel Galop | 1/32", value="Karel Galop")
-        ])
+paarden: list[Horse] = [
+    Horse([1,3], "Rappe Riko"),
+    Horse([1,2], "Leunie(Mike)"),
+    Horse([1,4], "Bartholomeus"),
+    Horse([1,5], "Trappelende Titus"),
+    Horse([1,6], "Karel Galop")
+]
+PaardenRace = MultiplayerPaarden(paarden)
 @app_commands.checks.cooldown(1, 1800.0, key=lambda i: (i.guild_id, i.user.id))
-@tree.command(name="paarden-race", description="Zie me rennen door het veld 🐎", guild=guild)
-async def self(interaction: discord.Interaction, paard: app_commands.Choice[str], inzet: int):
+@tree.command(name="paardenrace", description="Start de paardenrace.", guild=guild)
+async def self(interaction: discord.Interaction):
+    if PaardenRace.RaceJoinable:
+        await interaction.response.send_message("Er is al een race gestart!", ephemeral=True)
+        return
+    PaardenRace.initRace(interaction)
+    await PaardenRace.UpdateWachtenOpSpelersScherm()
+
+async def paarden_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+) -> list[app_commands.Choice[str]]:
+    return [
+        app_commands.Choice(name=paard.getNaamMetKansen(), value=paard.naam)
+        for paard in paarden if current.lower() in paard.naam.lower()
+    ]
+@app_commands.autocomplete(paard=paarden_autocomplete)
+@tree.command(name="join-paardenrace", description="join een paardenrace", guild=guild)
+async def self(interaction: discord.Interaction, paard: str, inzet: int):
     if inzet <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
         return
@@ -450,30 +473,20 @@ async def self(interaction: discord.Interaction, paard: app_commands.Choice[str]
         if not GenoegPunten(str(interaction.user.id), inzet):
             await interaction.response.send_message("Niet genoeg punten.", ephemeral=True)
             return
-    else:
-        await interaction.response.send_message("Je doet niet mee aan het spel.", ephemeral=True)
+    if not PaardenRace.RaceJoinable:
+        await interaction.response.send_message("Je kan nu geen race joinen...", ephemeral=True)
         return
-    username = interaction.user.display_name
-    paardinzet = paard
-    paarden: list[Horse] = [
-        Horse(1/4, "Rappe Riko"),
-        Horse(1/2, "Leunie(Mike)"),
-        Horse(1/16, "Bartholomeus"),
-        Horse(1/8, "Trappelende Titus"),
-        Horse(1/32, "Karel Galop")
-    ]
-    embed = GenPaardenEmbed(paarden, username, paardinzet, inzet)
-    await interaction.response.send_message(embed=embed)
-    winnende_paard: Horse = await HorseGame(paarden, interaction, username, paardinzet, inzet)
-    if winnende_paard.naam == paardinzet.value:
-        winnings = round((inzet/winnende_paard.ratioProbs[0]) * winnende_paard.ratioProbs[1])
-        await interaction.channel.send(f"{interaction.user.mention} heeft {winnings} punten gewonnen!")
-    else:
-        winnings = -inzet
-        await interaction.channel.send(f"{interaction.user.mention} heeft {inzet} punten verloren...")
-    data = getdata()
-    data[str(interaction.user.id)] += winnings
-    writedata(data)
+    if not str(interaction.user.id) in PaardenRace.SpelersNodigVoorStart:
+        await interaction.response.send_message("Je kan niet meedoen...", ephemeral=True)
+        return
+    if str(interaction.user.id) in PaardenRace.SpelersInSpel:
+        await interaction.response.send_message("Je doet al mee...", ephemeral=True)
+        return
+    if paard not in [paard.naam for paard in paarden]:
+        await interaction.response.send_message("Dat paard bestaat niet...", ephemeral=True)
+        return
+    await interaction.response.send_message("Je doet mee!", ephemeral=True)
+    await PaardenRace.JoinSpeler(str(interaction.user.id), paard, inzet)
 
 @tree.command(name="scorebord_rng_certified", description="rng certified", guild=guild)
 async def self(interaction: discord.Interaction):

@@ -1,9 +1,6 @@
-import asyncio
 import json
 import random
 import discord
-
-from utils.embeds import GenPaardenEmbed
 
 # standaard json functies
 def getdata() -> object:
@@ -115,7 +112,22 @@ def steel(userID: str, TargetID: str) -> bool:
         boete = puntenErbij * 2
         setPunten(userID, data[userID]-boete)
         return False, boete
-    
+
+def embedRoulette(interaction: discord.Interaction, outcome, winnings, bet_amount, bet_type_name, nummer):
+    embed = discord.Embed(title=f'Roulette', color=discord.Colour.red(), description=f"{interaction.user.display_name} heeft ingezet op ")
+    if nummer!=None:
+        embed.description += f"nummer {nummer}."
+    else:
+        embed.description += f"{bet_type_name}."
+
+    if winnings==0:
+        value = f"Je hebt {bet_amount} punten verloren"
+    else:
+        embed.color = discord.Colour.green()
+        value = f"Je hebt {winnings} punten gewonnen."
+    embed.add_field(name=f"🎲 De uitkomst was {outcome}", value=value, inline=False)
+    return embed
+
 def roulette(userID: str, bet_amount: int, bet_type: str, bet_value):
     def rouletteGame(bet_amount: int, bet_type: str, bet_value):
         # Define the possible outcomes and their corresponding odds
@@ -150,6 +162,58 @@ def roulette(userID: str, bet_amount: int, bet_type: str, bet_value):
     writedata(data)
     return outcome, winnings
 
+class RouletteDoubleOrNothing(discord.ui.Modal, title='Double or Nothing'):
+    bet_type = discord.ui.TextInput(label='Inzet', placeholder='Waar zet je op in? type: "Even", "Oneven" of "Getal"', style=discord.TextStyle.short, required=True)
+    getal = discord.ui.TextInput(label='Getal', placeholder="Als je op een getal inzet geef dat getal dan hier op.", style=discord.TextStyle.short,  required=False)
+    bet_amount = 0
+
+    async def on_submit(self, interaction: discord.Interaction):
+        bet_type = self.bet_type.value
+        nummer = None
+        if bet_type.lower() == 'getal':
+            bet_type = "number"
+            bet_type_name = "Nummer"
+            nummer = self.getal.value
+        elif bet_type.lower() == 'even':
+            bet_type = "even"
+            bet_type_name = "Even"
+        elif bet_type.lower() == 'oneven':
+            bet_type = "odd"
+            bet_type_name = "Oneven"
+
+        outcome, winnings = roulette(str(interaction.user.id), self.bet_amount, bet_type, nummer)
+        embed = embedRoulette(interaction, outcome, winnings, self.bet_amount, bet_type_name, nummer)
+        await interaction.response.send_message(embed=embed)
+        if winnings != 0:
+            self.bet_amount += winnings
+            DoubleRouletteVraag = RouletteDoubleOrNothingVraag(interaction=interaction, bet_amount=self.bet_amount)
+            await interaction.channel.send(f"Double or nothing met {self.bet_amount} punten?", view=DoubleRouletteVraag)
+
+class RouletteDoubleOrNothingVraag(discord.ui.View):
+    def __init__(self, *, timeout = 180, interaction: discord.Interaction, bet_amount):
+        super().__init__(timeout=timeout)
+        self.interaction = interaction
+        self.Spelernaam = interaction.user.display_name
+        self.bet_amount = bet_amount
+
+    @discord.ui.button(label="Ja", style=discord.ButtonStyle.primary)
+    async def Ja(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.display_name == self.Spelernaam:
+            uiopties = RouletteDoubleOrNothing()
+            uiopties.bet_amount = self.bet_amount
+            await interaction.response.send_modal(uiopties)
+            await interaction.message.delete()
+        else:
+            await interaction.response.send_message("Gsat rot op", ephemeral=True)
+        
+    @discord.ui.button(label="Nee", style=discord.ButtonStyle.secondary)
+    async def Nee(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.display_name == self.Spelernaam:
+            await interaction.response.defer()
+            await interaction.message.delete()
+        else:
+            await interaction.response.send_message("Gsat rot op", ephemeral=True)
+
 def trinna(UserID: str, bet_amount: int):
     data = getdata()
     # punten eraf
@@ -173,14 +237,14 @@ def trinna(UserID: str, bet_amount: int):
 
 class luckywheel:
     def __init__(self, RangeGetallen) -> None:
+        self.hoofprijsbeschikbaar = True
         self.begin, self.eind = RangeGetallen
         self.opties = self._geneRandomArray()
 
     def _geneRandomArray(self):
         array = []
         for _ in range(3):
-            nummer = random.randrange(self.begin, self.eind, step=5)
-            nummer = self._randomnegatief(nummer)
+            nummer = self._RandomNieuweGetal()
             array.append(nummer)
         return array
     
@@ -196,6 +260,14 @@ class luckywheel:
         return getal
 
     def _RandomNieuweGetal(self):
+        if self.hoofprijsbeschikbaar:
+            Hoofdprijs = random.choices(
+                        population=[False, True],
+                        weights=[9,1]
+                    )[0]
+            if Hoofdprijs:
+                self.hoofprijsbeschikbaar = False
+                return 500
         getal = random.randrange(self.begin, self.eind, step=5)
         getal = self._randomnegatief(getal)
         return getal
@@ -348,49 +420,3 @@ class BlackJack(discord.ui.View):
             await interaction.response.defer()
         else:
             await interaction.channel.send("Gsat rot op", ephemeral=True)
-
-class Horse:
-    def __init__(self, probability: float, naam: str) -> None:
-        self.probability = probability
-        self.ratioProbs = probability.as_integer_ratio()
-        self.PercentageDone = 0
-        self.finished = False
-        self.naam = naam
-
-    def MoveForward(self) -> None:
-        rand_distance = random.random()
-        distance = rand_distance*10 + self._randomBonus()
-        self.PercentageDone = round((self.PercentageDone + distance), 1)
-        self._CheckFinished()
-
-    def _randomBonus(self):
-        ratio = self.ratioProbs
-        kans = [False]*ratio[1]
-        for i in range(ratio[0]):
-            kans[i-1] = True
-        isBonus = random.choice(kans)
-        if isBonus:
-            return ratio[1]*0.1
-        else:
-            return 0.0
-
-    def _CheckFinished(self) -> None:
-        if self.PercentageDone >= 100:
-            self.PercentageDone = 100
-            self.finished = True
-        else:
-            pass
-
-async def HorseGame(paarden: list[Horse], interaction: discord.Interaction, username, paardinzet, punteninzet):
-    message = await interaction.original_response()
-    while True:
-        for paard in paarden:
-            paard.MoveForward()
-            if paard.finished:
-                embed = GenPaardenEmbed(paarden, username, paardinzet, punteninzet)
-                message = await interaction.original_response()
-                await message.edit(embed=embed)
-                return paard
-        embed = GenPaardenEmbed(paarden, username, paardinzet, punteninzet)
-        await message.edit(embed=embed)
-        await asyncio.sleep(1)
