@@ -9,6 +9,7 @@ from asyncio import sleep
 import asyncio
 from gtts import gTTS
 import json
+from TimeoutCommands.Timeout import TimeoutCheck, addTimeoutToCommand
 from utils.paarden_utils import Horse, MultiplayerPaarden
 from utils.redditpost import randomcopypasta, randomshitpost
 from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls, add_noep, rem_noep
@@ -319,9 +320,9 @@ async def users_autocomplete(
         for user in users if current.lower() in user.name.lower()
     ]
 
-@app_commands.checks.cooldown(1, 43200.0, key=lambda i: (i.guild_id, i.user.id))
 @tree.command(name="steel", description="steel punten van iemand anders", guild=guild)
 @app_commands.autocomplete(target=users_autocomplete)
+@TimeoutCheck()
 async def self(interaction: discord.Interaction, target: str):
     if not CheckIfUserExists(str(interaction.user.id)):
         await interaction.response.send_message(f"Je doet niet mee aan het spel.", ephemeral=True)
@@ -336,6 +337,7 @@ async def self(interaction: discord.Interaction, target: str):
             await interaction.response.send_message(f"{interaction.user.mention} heeft zojuist {puntenerbij} punten gestolen van {client.get_user(int(target)).mention}.")
         elif not isGelukt:
             await interaction.response.send_message(f"{interaction.user.mention} probeerde zojuist te stelen van {client.get_user(int(target)).mention}, maar heeft gefaald. Nu moet hij een boete betalen van {puntenerbij} punten.")
+        addTimeoutToCommand(str(interaction.user.id), interaction.command.name, 43200)
     else:
         await interaction.response.send_message(f"{target} doet niet mee...", ephemeral=True)
 
@@ -344,8 +346,8 @@ async def self(interaction: discord.Interaction, target: str):
         app_commands.Choice(name="Oneven", value="odd"),
         app_commands.Choice(name="Getal", value="number")
         ])
-@app_commands.checks.cooldown(1, 1800.0, key=lambda i: (i.guild_id, i.user.id))
 @tree.command(name="roulette", description="rng certified", guild=guild)
+@TimeoutCheck()
 async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_commands.Choice[str], nummer: int = None):
     if bet_amount <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
@@ -370,13 +372,14 @@ async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_
     outcome, winnings = roulette(str(interaction.user.id), bet_amount, bet_type.value, nummer)
     embed = embedRoulette(interaction, outcome, winnings, bet_amount, bet_type.name, nummer)
     await interaction.response.send_message(embed=embed)
+    addTimeoutToCommand(str(interaction.user.id), interaction.command.name, 1800)
     if winnings != 0:
         bet_amount += winnings
         DoubleRouletteVraag = RouletteDoubleOrNothingVraag(interaction=interaction, bet_amount=bet_amount)
         await interaction.channel.send(f"Double or nothing met {bet_amount} punten?", view=DoubleRouletteVraag)
 
-@app_commands.checks.cooldown(1, 1800.0, key=lambda i: (i.guild_id, i.user.id))
 @tree.command(name="trinna", description="trinna is altijd goed", guild=guild)
+@TimeoutCheck()
 async def self(interaction: discord.Interaction, bet_amount: int):
     if bet_amount <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
@@ -393,9 +396,10 @@ async def self(interaction: discord.Interaction, bet_amount: int):
     uitkomsten, bet_winst = trinna(str(interaction.user.id), bet_amount)
     embed = embedTrinna(interaction, bet_winst, bet_amount, uitkomsten)
     await interaction.response.send_message(embed=embed)
+    addTimeoutToCommand(str(interaction.user.id), interaction.command.name, 1800)
 
-@app_commands.checks.cooldown(1, 43200.0, key=lambda i: (i.guild_id, i.user.id))
 @tree.command(name="luckywheel", description="Altijd prijs!!!", guild=guild)
+@TimeoutCheck()
 async def self(interaction: discord.Interaction):
     data = getdata()
     if str(interaction.user.id) in data:
@@ -415,12 +419,13 @@ async def self(interaction: discord.Interaction):
         userid = str(interaction.user.id)
         data[userid] += punten
         writedata(data)
+        addTimeoutToCommand(str(interaction.user.id), interaction.command.name, 43200)
     else:
         await interaction.response.send_message("Je doet niet mee aan het spel.", ephemeral=True)
         return
 
-@app_commands.checks.cooldown(1, 300.0, key=lambda i: (i.guild_id, i.user.id))
 @tree.command(name="blackjack", description="Unlimited Money Glitch 100% WORKING!!1!", guild=guild)
+@TimeoutCheck()
 async def self(interaction: discord.Interaction, bet_amount: int):
     if bet_amount <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
@@ -436,6 +441,7 @@ async def self(interaction: discord.Interaction, bet_amount: int):
     blackjack = BlackJack(inzet=bet_amount, interaction=interaction)
     await interaction.response.send_message(view=blackjack)
     await blackjack.UpdateBericht("Hit of stand?")
+    addTimeoutToCommand(str(interaction.user.id), interaction.command.name, 43200)
 
 paarden: list[Horse] = [
     Horse([1,4], "Rappe Riko"),

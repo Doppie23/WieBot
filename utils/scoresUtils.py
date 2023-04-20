@@ -128,31 +128,32 @@ def embedRoulette(interaction: discord.Interaction, outcome, winnings, bet_amoun
     embed.add_field(name=f"🎲 De uitkomst was {outcome}", value=value, inline=False)
     return embed
 
-def roulette(userID: str, bet_amount: int, bet_type: str, bet_value):
-    def rouletteGame(bet_amount: int, bet_type: str, bet_value):
-        # Define the possible outcomes and their corresponding odds
-        outcomes = ['0', '00', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36']
-        odds = [1, 1, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35]
-        
-        # Get a random outcome based on the odds
-        outcome = random.choices(outcomes, weights=odds)[0]
-        
-        # Determine the payout based on the bet type and value
-        payout = 0
-        if bet_type == 'number' and str(bet_value) == outcome:
-            payout = 35
-        elif bet_type == 'even' and outcome != '0' and outcome != '00' and int(outcome) % 2 == 0:
-            payout = 1
-        elif bet_type == 'odd' and outcome != '0' and outcome != '00' and int(outcome) % 2 != 0:
-            payout = 1
-        
-        # Calculate the winnings and return the outcome and winnings
-        winnings = bet_amount * payout
-        return (outcome, winnings)
+def rouletteGame(bet_amount: int, bet_type: str, bet_value, outcome = None | str):
+    # Define the possible outcomes and their corresponding odds
+    outcomes = ['0', '00', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36']
+    odds = [1, 1, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35]
     
+    # Get a random outcome based on the odds
+    if outcome == None:
+        outcome = random.choices(outcomes, weights=odds)[0]
+    
+    # Determine the payout based on the bet type and value
+    payout = 0
+    if bet_type == 'number' and str(bet_value) == outcome:
+        payout = 35
+    elif bet_type == 'even' and outcome != '0' and outcome != '00' and int(outcome) % 2 == 0:
+        payout = 1
+    elif bet_type == 'odd' and outcome != '0' and outcome != '00' and int(outcome) % 2 != 0:
+        payout = 1
+    
+    # Calculate the winnings and return the outcome and winnings
+    winnings = bet_amount * payout
+    return (outcome, winnings)
+
+def roulette(userID: str, bet_amount: int, bet_type: str, bet_value, outcome = None):    
     data = getdata()
 
-    outcome, winnings = rouletteGame(bet_amount, bet_type, bet_value)
+    outcome, winnings = rouletteGame(bet_amount, bet_type, bet_value, outcome)
     if winnings>0:
         score = data[userID] + winnings
         data[userID] = score
@@ -166,6 +167,7 @@ class RouletteDoubleOrNothing(discord.ui.Modal, title='Double or Nothing'):
     bet_type = discord.ui.TextInput(label='Inzet', placeholder='Waar zet je op in? type: "Even", "Oneven" of "Getal"', style=discord.TextStyle.short, required=True)
     getal = discord.ui.TextInput(label='Getal', placeholder="Als je op een getal inzet geef dat getal dan hier op.", style=discord.TextStyle.short,  required=False)
     bet_amount = 0
+    outcome = None
 
     async def on_submit(self, interaction: discord.Interaction):
         bet_type = self.bet_type.value
@@ -181,7 +183,7 @@ class RouletteDoubleOrNothing(discord.ui.Modal, title='Double or Nothing'):
             bet_type = "odd"
             bet_type_name = "Oneven"
 
-        outcome, winnings = roulette(str(interaction.user.id), self.bet_amount, bet_type, nummer)
+        outcome, winnings = roulette(str(interaction.user.id), self.bet_amount, bet_type, nummer, self.outcome)
         embed = embedRoulette(interaction, outcome, winnings, self.bet_amount, bet_type_name, nummer)
         await interaction.response.send_message(embed=embed)
         if winnings != 0:
@@ -199,8 +201,11 @@ class RouletteDoubleOrNothingVraag(discord.ui.View):
     @discord.ui.button(label="Ja", style=discord.ButtonStyle.primary)
     async def Ja(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.display_name == self.Spelernaam:
+            outcome, _ = rouletteGame(0, "even", None, None)
+            print("uitkomst:", outcome)
             uiopties = RouletteDoubleOrNothing()
             uiopties.bet_amount = self.bet_amount
+            uiopties.outcome = outcome
             await interaction.response.send_modal(uiopties)
             await interaction.message.delete()
         else:
