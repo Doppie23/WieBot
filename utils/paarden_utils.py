@@ -49,6 +49,7 @@ class MultiplayerPaarden:
 
     def initRace(self, interaction: discord.Interaction):
         self.RaceJoinable = True
+        self._reinithorses()
 
         self.SpelersNodigVoorStart = getPlayerIDS()
         self.SpelersInSpel = {} # {"PlayerID": "[Inzet: Horse, punten]"}
@@ -57,12 +58,16 @@ class MultiplayerPaarden:
         self.InitInteraction = interaction
         self.timerTask = asyncio.create_task(self.TimerVoorStartBericht())
 
+    def _reinithorses(self):
+        for paard in self.paarden:
+            paard.__init__(paard.ratioProbs, paard.naam)
+
     async def TimerVoorStartBericht(self):
         def geefpuntenterug():
             for playerID in self.SpelersInSpel:
                 setPunten(playerID, getPunten(playerID) + self.SpelersInSpel[playerID][1])
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(180)
         await self.UpdateWachtenOpSpelersScherm(discord.Colour.blue(), "Niet genoeg spelers om de race te starten.")
         self.RaceJoinable = False
         await asyncio.sleep(4)

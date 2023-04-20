@@ -438,14 +438,13 @@ async def self(interaction: discord.Interaction, bet_amount: int):
     await blackjack.UpdateBericht("Hit of stand?")
 
 paarden: list[Horse] = [
-    Horse([1,3], "Rappe Riko"),
+    Horse([1,4], "Rappe Riko"),
     Horse([1,2], "Leunie(Mike)"),
-    Horse([1,4], "Bartholomeus"),
-    Horse([1,5], "Trappelende Titus"),
-    Horse([1,6], "Karel Galop")
+    Horse([1,8], "Bartholomeus"),
+    Horse([1,6], "Trappelende Titus"),
+    Horse([1,10], "Karel Galop")
 ]
 PaardenRace = MultiplayerPaarden(paarden)
-@app_commands.checks.cooldown(1, 1800.0, key=lambda i: (i.guild_id, i.user.id))
 @tree.command(name="paardenrace", description="Start de paardenrace.", guild=guild)
 async def self(interaction: discord.Interaction):
     if PaardenRace.RaceJoinable:
