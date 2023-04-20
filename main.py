@@ -322,8 +322,9 @@ async def users_autocomplete(
 
 @tree.command(name="steel", description="steel punten van iemand anders", guild=guild)
 @app_commands.autocomplete(target=users_autocomplete)
-@TimeoutCheck()
 async def self(interaction: discord.Interaction, target: str):
+    if await TimeoutCheck(interaction):
+        return
     if not CheckIfUserExists(str(interaction.user.id)):
         await interaction.response.send_message(f"Je doet niet mee aan het spel.", ephemeral=True)
         return
@@ -347,8 +348,9 @@ async def self(interaction: discord.Interaction, target: str):
         app_commands.Choice(name="Getal", value="number")
         ])
 @tree.command(name="roulette", description="rng certified", guild=guild)
-@TimeoutCheck()
 async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_commands.Choice[str], nummer: int = None):
+    if await TimeoutCheck(interaction):
+        return
     if bet_amount <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
         return
@@ -379,8 +381,9 @@ async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_
         await interaction.channel.send(f"Double or nothing met {bet_amount} punten?", view=DoubleRouletteVraag)
 
 @tree.command(name="trinna", description="trinna is altijd goed", guild=guild)
-@TimeoutCheck()
 async def self(interaction: discord.Interaction, bet_amount: int):
+    if await TimeoutCheck(interaction):
+        return
     if bet_amount <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
         return
@@ -399,8 +402,9 @@ async def self(interaction: discord.Interaction, bet_amount: int):
     addTimeoutToCommand(str(interaction.user.id), interaction.command.name, 1800)
 
 @tree.command(name="luckywheel", description="Altijd prijs!!!", guild=guild)
-@TimeoutCheck()
 async def self(interaction: discord.Interaction):
+    if await TimeoutCheck(interaction):
+        return
     data = getdata()
     if str(interaction.user.id) in data:
         wheel = luckywheel([5,100])
@@ -425,8 +429,9 @@ async def self(interaction: discord.Interaction):
         return
 
 @tree.command(name="blackjack", description="Unlimited Money Glitch 100% WORKING!!1!", guild=guild)
-@TimeoutCheck()
 async def self(interaction: discord.Interaction, bet_amount: int):
+    if await TimeoutCheck(interaction):
+        return
     if bet_amount <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
         return

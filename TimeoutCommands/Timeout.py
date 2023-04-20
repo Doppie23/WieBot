@@ -3,23 +3,18 @@ import json
 
 import discord
 
-def TimeoutCheck():
-    def wrap(f):
-        async def wrapped_f(*args):
-            interaction: discord.Interaction = args[0]
-            userID = str(interaction.user.id)
-            CommandName = interaction.command.name
-            print(CommandName)
-            TijdNogTimeout = getTimeNogTimeout(userID, CommandName)
-            aantalSecondenTimeout = TijdNogTimeout.total_seconds()
-            if aantalSecondenTimeout <= 0:
-                RemoveTimeout(userID, CommandName)
-                await f(*args)
-            else:
-                bericht = createMessageTimeString(aantalSecondenTimeout)
-                await interaction.response.send_message(bericht, ephemeral=True)                
-        return wrapped_f
-    return wrap
+async def TimeoutCheck(interaction: discord.Interaction):
+    userID = str(interaction.user.id)
+    CommandName = interaction.command.name
+    TijdNogTimeout = getTimeNogTimeout(userID, CommandName)
+    aantalSecondenTimeout = TijdNogTimeout.total_seconds()
+    if aantalSecondenTimeout <= 0:
+        RemoveTimeout(userID, CommandName)
+        return False
+    else:
+        bericht = createMessageTimeString(aantalSecondenTimeout)
+        await interaction.response.send_message(bericht, ephemeral=True)                
+        return True
 
 def addTimeoutToCommand(userID: str, CommandName: str, AantalSeconden: int):
     currTime = GetTime()
@@ -49,7 +44,6 @@ def getTimeNogTimeout(userID: str, commandNaam: str):
         tijdTimeoutVoorbij = data[userID][commandNaam]
         tijdTimeoutVoorbij = datetime.strptime(tijdTimeoutVoorbij, "%Y-%m-%d %H:%M:%S")
         tijdnu = GetTime()
-        print(tijdTimeoutVoorbij, tijdnu)
         return tijdTimeoutVoorbij - tijdnu
 
 def RemoveTimeout(userID: str, CommandName: str):
@@ -79,6 +73,8 @@ def createMessageTimeString(totalseconds: int):
         string += f" {round(hours)} uur"
     if minutes > 0:
         string += f" {round(minutes)} minuten"
-    if seconds > 0:
+    if seconds > 0 and hours==0 and minutes==0:
+        string += f" {round(seconds)} seconden"
+    elif seconds > 0:
         string += f" en {round(seconds)} seconden"
     return string
