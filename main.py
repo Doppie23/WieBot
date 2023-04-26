@@ -446,7 +446,7 @@ async def self(interaction: discord.Interaction, bet_amount: int):
     blackjack = BlackJack(inzet=bet_amount, interaction=interaction)
     await interaction.response.send_message(view=blackjack)
     await blackjack.UpdateBericht("Hit of stand?")
-    addTimeoutToCommand(str(interaction.user.id), interaction.command.name, 43200)
+    addTimeoutToCommand(str(interaction.user.id), interaction.command.name, 300)
 
 paarden: list[Horse] = [
     Horse([1,4], "Rappe Riko"),
