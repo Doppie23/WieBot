@@ -410,7 +410,6 @@ class BlackJack(discord.ui.View):
                 await self.UpdateBericht(f"Dealer is gebust. {self.Spelernaam} wint.")
                 self.RegelPunten()
                 return
-            await asyncio.sleep(1)
 
     async def DetermineWinner(self):
         player_score = self.sum_card_values(self.player_hand)
