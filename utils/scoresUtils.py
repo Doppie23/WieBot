@@ -1,4 +1,3 @@
-import asyncio
 import json
 import random
 import discord
@@ -505,8 +504,13 @@ class BlackJack:
         async def DoubleDown(interaction: discord.Interaction):
             if interaction.user.display_name == self.Spelernaam:
                 if self.knopBeschikbaar:
-                    self.inzet *= 2
-                    await self.PlayerTurn("hit")
+                    punten = getPunten(str(interaction.user.id))
+                    if punten >= self.inzet * 2:
+                        self.inzet *= 2
+                        await self.PlayerTurn("hit")
+                    else:
+                        await interaction.response.send_message("Je hebt niet genoeg punten voor een double down...", ephemeral=True)
+                        return
                 await interaction.response.defer()
             else:
                 await interaction.channel.send("Gsat rot op", ephemeral=True)

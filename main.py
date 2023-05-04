@@ -33,7 +33,7 @@ from utils.scoresUtils import (
     writedata,
     embedRoulette,
 )
-from utils.embeds import embedLuckyWheel, embedTrinna
+from utils.embeds import embedLuckyWheel, embedTrinna, embedOutro
 from muziek import muziekspelen
 
 intents = discord.Intents.all()
@@ -148,23 +148,22 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
 
         laatste: discord.Member = member_leave_list[0]
         addScoreLaatsteLeave(str(laatste.id), laatste.name)
-        await interaction.channel.send(f"{laatste.mention}")
 
         # rng troep score regelen
         if choices.value == "rngding":
             ScoreWaarWeOmspelen = random.randrange(1, 100)
             Positief = random.choices(population=[True, False], weights=[9, 1])[0]
             Multiplier = random.choice(range(1, 10))
-            if Positief:
-                await interaction.channel.send(f"De outro was +{ScoreWaarWeOmspelen} punten waard, met een multiplier van {Multiplier}x.")
-            elif not Positief:
-                await interaction.channel.send(f"De outro was -{ScoreWaarWeOmspelen} punten waard, met een multiplier van {Multiplier}x.")
+            embed = embedOutro(ScoreWaarWeOmspelen, Positief, Multiplier, laatste)
+            await interaction.channel.send(embed=embed)
             ScoreMetMultiplier = ScoreWaarWeOmspelen * Multiplier
             spelers = getPlayerIDS()
             if str(laatste.id) in spelers:
                 ScoreBijVoorLaatsteLeaven(str(laatste.id), ScoreMetMultiplier, Positief)
             else:
                 await interaction.channel.send(f"{laatste.mention} doet niet mee, niemand krijgt er dus punten bij.")
+        else:
+            await interaction.channel.send(f"{laatste.mention}")
 
     else:
         await interaction.response.send_message("Join eerst een spraakkanaal.")
@@ -629,6 +628,8 @@ async def on_message(message: discord.Message):
     # gpt troep
     if message.content.startswith(client.user.mention):
         bericht = message.content.removeprefix(client.user.mention)
+        if bericht == "":
+            bericht = "\n"
         try:
             async with message.channel.typing():
                 antwoorden = await getResponse(bericht)
