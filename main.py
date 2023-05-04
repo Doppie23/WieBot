@@ -154,15 +154,15 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
         if choices.value == "rngding":
             ScoreWaarWeOmspelen = random.randrange(1, 100)
             Positief = random.choices(population=[True, False], weights=[9, 1])[0]
-            Multiplyer = random.choice(range(1, 10))
-            ScoreWaarWeOmspelen *= Multiplyer
+            Multiplier = random.choice(range(1, 10))
             if Positief:
-                await interaction.channel.send(f"De outro is +{ScoreWaarWeOmspelen} punten waard.")
+                await interaction.channel.send(f"De outro was +{ScoreWaarWeOmspelen} punten waard, met een multiplier van {Multiplier}x.")
             elif not Positief:
-                await interaction.channel.send(f"De outro is -{ScoreWaarWeOmspelen} punten waard.")
+                await interaction.channel.send(f"De outro was -{ScoreWaarWeOmspelen} punten waard, met een multiplier van {Multiplier}x.")
+            ScoreMetMultiplier = ScoreWaarWeOmspelen * Multiplier
             spelers = getPlayerIDS()
             if str(laatste.id) in spelers:
-                ScoreBijVoorLaatsteLeaven(str(laatste.id), ScoreWaarWeOmspelen, Positief)
+                ScoreBijVoorLaatsteLeaven(str(laatste.id), ScoreMetMultiplier, Positief)
             else:
                 await interaction.channel.send(f"{laatste.mention} doet niet mee, niemand krijgt er dus punten bij.")
 
@@ -493,7 +493,7 @@ async def self(interaction: discord.Interaction, bet_amount: int):
         await interaction.response.send_message("Je doet niet mee aan het spel.", ephemeral=True)
         return
     blackjack = BlackJack(inzet=bet_amount, interaction=interaction)
-    await interaction.response.send_message(view=blackjack)
+    await interaction.response.send_message(view=blackjack.view)
     await blackjack.UpdateBericht("Hit of stand?")
     addTimeoutToCommand(str(interaction.user.id), interaction.command.name, 300)
 

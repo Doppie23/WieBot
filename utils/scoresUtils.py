@@ -12,8 +12,16 @@ def getdata() -> object:
 
 
 def writedata(data: object) -> None:
+    data = removeNegatievepunten(data)
     with open("scores/scores.json", "w") as f:
         json.dump(data, f, indent=2)
+
+
+def removeNegatievepunten(data: object) -> object:
+    for userid in data:
+        if data[userid] < 0:
+            data[userid] = 0
+    return data
 
 
 def getPunten(userID: str) -> int:
@@ -62,9 +70,7 @@ def Leaderboard_rng():
             gebruikers.append(UserID)
             score.append(data[UserID])
 
-        score_sorted, userIDS_sorted = (
-            list(t) for t in zip(*sorted(zip(score, gebruikers), reverse=True))
-        )
+        score_sorted, userIDS_sorted = (list(t) for t in zip(*sorted(zip(score, gebruikers), reverse=True)))
         return score_sorted, userIDS_sorted
 
     Leaderboard = {}
@@ -117,9 +123,7 @@ def steel(userID: str, TargetID: str) -> bool:
         puntenFraction = round(targetpunten / userpunten, 2)
     else:
         puntenFraction = round(userpunten / targetpunten, 2)
-    puntenFraction = (
-        1 - puntenFraction
-    )  # om het systeem om te draaien, als je veel punten heb steel je minder van kleine spelers
+    puntenFraction = 1 - puntenFraction  # om het systeem om te draaien, als je veel punten heb steel je minder van kleine spelers
 
     puntenErbij = round(data[TargetID] * puntenFraction)
     puntenErbij = round(puntenErbij * 0.3)
@@ -240,23 +244,15 @@ class RouletteDoubleOrNothing(discord.ui.Modal, title="Double or Nothing"):
             bet_type = "odd"
             bet_type_name = "Oneven"
         else:
-            await interaction.response.send_message(
-                f"{bet_type} is geen optie.", ephemeral=True
-            )
+            await interaction.response.send_message(f"{bet_type} is geen optie.", ephemeral=True)
             return
 
-        outcome, winnings = roulette(
-            str(interaction.user.id), self.bet_amount, bet_type, nummer, self.outcome
-        )
-        embed = embedRoulette(
-            interaction, outcome, winnings, self.bet_amount, bet_type_name, nummer
-        )
+        outcome, winnings = roulette(str(interaction.user.id), self.bet_amount, bet_type, nummer, self.outcome)
+        embed = embedRoulette(interaction, outcome, winnings, self.bet_amount, bet_type_name, nummer)
         await interaction.response.send_message(embed=embed)
         if winnings != 0:
             self.bet_amount *= 2
-            DoubleRouletteVraag = RouletteDoubleOrNothingVraag(
-                interaction=interaction, bet_amount=self.bet_amount
-            )
+            DoubleRouletteVraag = RouletteDoubleOrNothingVraag(interaction=interaction, bet_amount=self.bet_amount)
             await interaction.channel.send(
                 f"Double or nothing met {self.bet_amount} punten?",
                 view=DoubleRouletteVraag,
@@ -360,12 +356,14 @@ class luckywheel:
         return self.opties[2]
 
 
-class BlackJack(discord.ui.View):
-    def __init__(self, *, timeout=180, inzet, interaction: discord.Interaction):
-        super().__init__(timeout=timeout)
+class BlackJack:
+    def __init__(self, inzet, interaction: discord.Interaction):
         self.inzet = inzet
         self.knopBeschikbaar = True
         self.interaction = interaction
+        self.view = discord.ui.View()
+        self.Create_View()
+        self.DoubleDownBeschikbaar = True
 
         self.Spelernaam = interaction.user.display_name
 
@@ -384,6 +382,10 @@ class BlackJack(discord.ui.View):
         self.winner = None
 
     async def PlayerTurn(self, action: str):
+        if self.DoubleDownBeschikbaar:
+            self.DoubleDownBeschikbaar = False
+            self.view.remove_item(self.view.children[2])
+
         self.knopBeschikbaar = False
         if action.lower() == "hit":
             self.player_hand.append(self.deck.pop())
@@ -455,7 +457,7 @@ class BlackJack(discord.ui.View):
         embed = self.GenerateEmbed()
         embed.add_field(name="", value=actie, inline=False)
         message = await self.interaction.original_response()
-        await message.edit(embed=embed)
+        await message.edit(embed=embed, view=self.view)
 
     def GenerateEmbed(self):
         def HandToString(hand):
@@ -474,33 +476,49 @@ class BlackJack(discord.ui.View):
             description=f"{self.interaction.user.display_name} heeft {self.inzet} punten ingezet.",
             color=discord.Colour.brand_red(),
         )
-        embed.add_field(
-            name="Player hand", value=HandToString(self.player_hand), inline=False
-        )
+        embed.add_field(name="Player hand", value=HandToString(self.player_hand), inline=False)
         if self.winner == None:
             Dealerhand = self.DealerHandHidden
         else:
             Dealerhand = self.dealer_hand
-        embed.add_field(
-            name="Dealer hand", value=HandToString(Dealerhand), inline=False
-        )
+        embed.add_field(name="Dealer hand", value=HandToString(Dealerhand), inline=False)
 
         return embed
 
-    @discord.ui.button(label="Hit", style=discord.ButtonStyle.primary)
-    async def Hit(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.display_name == self.Spelernaam:
-            if self.knopBeschikbaar:
-                await self.PlayerTurn("hit")
-            await interaction.response.defer()
-        else:
-            await interaction.channel.send("Gsat rot op", ephemeral=True)
+    def Create_View(self):
+        async def Hit(interaction: discord.Interaction):
+            if interaction.user.display_name == self.Spelernaam:
+                if self.knopBeschikbaar:
+                    await self.PlayerTurn("hit")
+                await interaction.response.defer()
+            else:
+                await interaction.channel.send("Gsat rot op", ephemeral=True)
 
-    @discord.ui.button(label="Stand", style=discord.ButtonStyle.secondary)
-    async def Stand(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.display_name == self.Spelernaam:
-            if self.knopBeschikbaar:
-                await self.PlayerTurn("stand")
-            await interaction.response.defer()
-        else:
-            await interaction.channel.send("Gsat rot op", ephemeral=True)
+        async def Stand(interaction: discord.Interaction):
+            if interaction.user.display_name == self.Spelernaam:
+                if self.knopBeschikbaar:
+                    await self.PlayerTurn("stand")
+                await interaction.response.defer()
+            else:
+                await interaction.channel.send("Gsat rot op", ephemeral=True)
+
+        async def DoubleDown(interaction: discord.Interaction):
+            if interaction.user.display_name == self.Spelernaam:
+                if self.knopBeschikbaar:
+                    self.inzet *= 2
+                    await self.PlayerTurn("hit")
+                await interaction.response.defer()
+            else:
+                await interaction.channel.send("Gsat rot op", ephemeral=True)
+
+        HitButton = discord.ui.Button(label="Hit", style=discord.ButtonStyle.primary)
+        HitButton.callback = Hit
+        self.view.add_item(HitButton)
+
+        StandButton = discord.ui.Button(label="Stand", style=discord.ButtonStyle.secondary)
+        StandButton.callback = Stand
+        self.view.add_item(StandButton)
+
+        DoubleDownButton = discord.ui.Button(label="Double Down", style=discord.ButtonStyle.red)
+        DoubleDownButton.callback = DoubleDown
+        self.view.add_item(DoubleDownButton)
