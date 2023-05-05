@@ -32,6 +32,7 @@ from utils.scoresUtils import (
     trinna,
     writedata,
     embedRoulette,
+    Donate,
 )
 from utils.embeds import embedLuckyWheel, embedTrinna, embedOutro
 from muziek import muziekspelen
@@ -564,6 +565,26 @@ async def self(interaction: discord.Interaction):
         nummer += 1
 
     await interaction.response.send_message(embed=embed)
+
+
+@tree.command(name="donate", description="doneer punten aan iemand anders.", guild=guild)
+@app_commands.autocomplete(target=users_autocomplete)
+async def self(interaction: discord.Interaction, target: str, amount: int):
+    if amount <= 0:
+        await interaction.response.send_message("Je kan niet een negatief aantal of nul punten doneren.", ephemeral=True)
+        return
+    data = getdata()
+    if str(interaction.user.id) in data:
+        if not GenoegPunten(str(interaction.user.id), amount):
+            await interaction.response.send_message("Niet genoeg punten.", ephemeral=True)
+            return
+    else:
+        await interaction.response.send_message("Je doet niet mee aan het spel.", ephemeral=True)
+        return
+
+    Donate(str(interaction.user.id), str(target), amount)
+    targetMember: discord.Member = client.get_user(int(target))
+    interaction.response.send_message(f"{interaction.user.mention} hebt {amount} punten gedoneerd aan {targetMember.mention}.")
 
 
 @client.event

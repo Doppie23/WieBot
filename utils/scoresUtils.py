@@ -526,3 +526,10 @@ class BlackJack:
         DoubleDownButton = discord.ui.Button(label="Double Down", style=discord.ButtonStyle.red)
         DoubleDownButton.callback = DoubleDown
         self.view.add_item(DoubleDownButton)
+
+
+def Donate(GifterID: str, RecievantID: str, Amount: int):
+    data = getdata()
+    data[GifterID] -= Amount
+    data[RecievantID] += Amount
+    writedata(data)
