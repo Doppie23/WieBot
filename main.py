@@ -35,6 +35,7 @@ from utils.scoresUtils import (
     Donate,
 )
 from utils.embeds import embedLuckyWheel, embedTrinna, embedOutro
+from utils.StonkUtils import BuyStonks, getBedrijven, embedPortemonnee, SellStonks, embedCurrentPrice, getPortemonnee
 from muziek import muziekspelen
 
 intents = discord.Intents.all()
@@ -584,7 +585,72 @@ async def self(interaction: discord.Interaction, target: str, amount: int):
 
     Donate(str(interaction.user.id), str(target), amount)
     targetMember: discord.Member = client.get_user(int(target))
-    interaction.response.send_message(f"{interaction.user.mention} hebt {amount} punten gedoneerd aan {targetMember.mention}.")
+    await interaction.response.send_message(f"{interaction.user.mention} hebt {amount} punten gedoneerd aan {targetMember.mention}.")
+
+
+async def bedrijf_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+) -> list[app_commands.Choice[str]]:
+    Bedrijven = await getBedrijven()
+    return [app_commands.Choice(name=bedrijf, value=str(bedrijf)) for bedrijf in Bedrijven]
+
+
+@tree.command(name="buy-stonks", description="Koop stonks", guild=guild)
+@app_commands.autocomplete(bedrijf=bedrijf_autocomplete)
+async def self(interaction: discord.Interaction, bedrijf: str, amount: int):
+    if amount <= 0:
+        await interaction.response.send_message("Je kan niet een negatief aantal of nul aandelen kopen.", ephemeral=True)
+        return
+    data = getdata()
+    if not str(interaction.user.id) in data:
+        await interaction.response.send_message("Je doet niet mee aan het spel.", ephemeral=True)
+        return
+    gelukt = await BuyStonks(str(interaction.user.id), bedrijf, amount)
+    if not gelukt:
+        await interaction.response.send_message("Je voldoet niet aan de eisen.", ephemeral=True)
+        return
+    else:
+        await interaction.response.send_message(f"{interaction.user.mention} heeft {amount} {bedrijf} aandelen gekocht.")
+
+
+@tree.command(name="portemonnee", description="Kijk welke stonks je op het moment bezit", guild=guild)
+async def self(interaction: discord.Interaction):
+    embed = await embedPortemonnee(str(interaction.user.id))
+    await interaction.response.send_message(embed=embed)
+
+
+async def portemonnee_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+) -> list[app_commands.Choice[str]]:
+    bedrijven = getPortemonnee(str(interaction.user.id))
+    return [app_commands.Choice(name=bedrijf, value=str(bedrijf)) for bedrijf in bedrijven]
+
+
+@tree.command(name="sell-stonks", description="Verkoop stonks", guild=guild)
+@app_commands.autocomplete(bedrijf=portemonnee_autocomplete)
+async def self(interaction: discord.Interaction, bedrijf: str, amount: int):
+    if amount <= 0:
+        await interaction.response.send_message("Je kan niet een negatief aantal of nul aandelen verkopen.", ephemeral=True)
+        return
+    data = getdata()
+    if not str(interaction.user.id) in data:
+        await interaction.response.send_message("Je doet niet mee aan het spel.", ephemeral=True)
+        return
+    gelukt = await SellStonks(str(interaction.user.id), bedrijf, amount)
+    if not gelukt:
+        await interaction.response.send_message("Je voldoet niet aan de eisen.", ephemeral=True)
+        return
+    else:
+        await interaction.response.send_message(f"{interaction.user.mention} heeft {amount} {bedrijf} aandelen verkocht.")
+
+
+@tree.command(name="current-price", description="Krijg informatie over de huidige prijs van een bedrijf", guild=guild)
+@app_commands.autocomplete(bedrijf=bedrijf_autocomplete)
+async def self(interaction: discord.Interaction, bedrijf: str):
+    embed = await embedCurrentPrice(bedrijf)
+    await interaction.response.send_message(embed=embed)
 
 
 @client.event

@@ -231,6 +231,7 @@ class RouletteDoubleOrNothing(discord.ui.Modal, title="Double or Nothing"):
 
     async def on_submit(self, interaction: discord.Interaction):
         bet_type = self.bet_type.value
+        bet_type = bet_type.strip()
         nummer = None
         if bet_type.lower() == "getal":
             bet_type = "number"
@@ -381,10 +382,6 @@ class BlackJack:
         self.winner = None
 
     async def PlayerTurn(self, action: str):
-        if self.DoubleDownBeschikbaar:
-            self.DoubleDownBeschikbaar = False
-            self.view.remove_item(self.view.children[2])
-
         self.knopBeschikbaar = False
         if action.lower() == "hit":
             self.player_hand.append(self.deck.pop())
@@ -396,7 +393,22 @@ class BlackJack:
                 return
             await self.UpdateBericht("Hit of stand?")
             self.knopBeschikbaar = True
+        elif action.lower() == "doubledown":
+            if self.DoubleDownBeschikbaar:
+                self.DoubleDownBeschikbaar = False
+                self.view.remove_item(self.view.children[2])
+            self.inzet *= 2
+            self.player_hand.append(self.deck.pop())
+            await self.UpdateBericht(f"{self.Spelernaam} doubles down.")
+            if self.sum_card_values(self.player_hand) > 21:
+                self.winner = "Dealer"
+                await self.UpdateBericht(f"{self.Spelernaam} is gebust. Dealer wint.")
+                self.RegelPunten()
+                return
+            await self.DealerTurn()
+            await self.DetermineWinner()
         elif action.lower() == "stand":
+            self.DoubleDownBeschikbaar = False
             await self.UpdateBericht(f"{self.Spelernaam} stands.")
             await self.DealerTurn()
             await self.DetermineWinner()
@@ -504,13 +516,7 @@ class BlackJack:
         async def DoubleDown(interaction: discord.Interaction):
             if interaction.user.display_name == self.Spelernaam:
                 if self.knopBeschikbaar:
-                    punten = getPunten(str(interaction.user.id))
-                    if punten >= self.inzet * 2:
-                        self.inzet *= 2
-                        await self.PlayerTurn("hit")
-                    else:
-                        await interaction.response.send_message("Je hebt niet genoeg punten voor een double down...", ephemeral=True)
-                        return
+                    await self.PlayerTurn("doubledown")
                 await interaction.response.defer()
             else:
                 await interaction.channel.send("Gsat rot op", ephemeral=True)

@@ -1,0 +1,15 @@
+{
+  "bedrijven": {
+    "Luukbv": 80,
+    "iFruit": 91
+  },
+  "portemonnees": {
+    "23312990": {
+      "Luukbv": 10
+    },
+    "327038629585223690": {
+      "iFruit": 9,
+      "Luukbv": 22
+    }
+  }
+}
