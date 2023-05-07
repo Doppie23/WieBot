@@ -76,18 +76,18 @@ def Stonkbeschikbaar(bedrijf: str, amount: int) -> bool:
             return True
 
 
-async def BuyStonks(userID: str, bedrijf: str, amount: int) -> bool:
+async def BuyStonks(userID: str, bedrijf: str, amount: int):
     if not bedrijf in await getBedrijven():
-        return False
+        return False, None
     prijs = await getPrice(bedrijf)
     if not GenoegGeld(userID, prijs * amount):
-        return False
+        return False, None
     if not Stonkbeschikbaar(bedrijf, amount):
-        return False
+        return False, None
 
     AddToPortemonnee(userID, bedrijf, amount)
     setPunten(userID, getPunten(userID) - prijs * amount)
-    return True
+    return True, prijs * amount
 
 
 def getPortemonnee(userID: str) -> dict:
@@ -98,23 +98,27 @@ def getPortemonnee(userID: str) -> dict:
 
 async def SellStonks(userID: str, bedrijf: str, amount: int) -> bool:
     if not bedrijf in await getBedrijven():
-        return False
+        return False, None
     prijs = await getPrice(bedrijf)
     if not bedrijf in getPortemonnee(userID):
-        return False
+        return False, None
     if not amount <= getPortemonnee(userID)[bedrijf]:
-        return False
+        return False, None
     AddToPortemonnee(userID, bedrijf, -amount)
     setPunten(userID, getPunten(userID) + prijs * amount)
-    return True
+    return True, prijs * amount
 
 
 # embeds
 async def embedPortemonnee(userID: str) -> discord.Embed:
     embed = discord.Embed(title=f"Portomonnee", color=discord.Colour.blue())
     portomonnee = getPortemonnee(userID)
+    if len(portomonnee) == 0:
+        return embed
     for bedrijf in portomonnee:
-        embed.add_field(name=bedrijf, value=f"{portomonnee[bedrijf]} aandelen", inline=False)
+        if portomonnee[bedrijf] == 0:
+            continue
+        embed.add_field(name=bedrijf, value=f"{portomonnee[bedrijf]} aandelen | Huidige prijs: {await getPrice(bedrijf)}", inline=False)
     return embed
 
 
@@ -122,15 +126,33 @@ def createStringfromList(list):
     return ", ".join(map(str, list))
 
 
+def getData(bedrijf):
+    with open("stonks/stonks.json") as f:
+        data = json.load(f)
+    if not bedrijf in data["bedrijven"]:
+        data["bedrijven"][bedrijf] = 100
+        with open("stonks/stonks.json", "w") as f:
+            json.dump(data, f, indent=2)
+    return data
+
+
 async def embedCurrentPrice(bedrijf: str):
     embed = discord.Embed(title=f"{bedrijf} | Info", color=discord.Colour.blue())
     embed.add_field(name="Prijs per aandeel momenteel", value=f"{await getPrice(bedrijf)}", inline=False)
-    with open("stonks/stonks.json") as f:
-        data = json.load(f)
+    data = getData(bedrijf)
     aandelenbesackibaar = data["bedrijven"][bedrijf]
     embed.add_field(name="Aantal aandelen beschikbaar", value=f"{aandelenbesackibaar}", inline=False)
     prijsuur = createStringfromList(await getLaatsteUur(bedrijf))
     embed.add_field(name="Prijs laatste uur", value=f"{prijsuur}", inline=False)
     prijsdag = createStringfromList(await getLaatsteDag(bedrijf))
     embed.add_field(name="Prijs laatste 24 uur", value=f"{prijsdag}", inline=False)
+    return embed
+
+
+async def embedKoers():
+    embed = discord.Embed(title="Koers", color=discord.Colour.blue())
+    bedrijven = await getBedrijven()
+    for bedrijf in bedrijven:
+        data = getData(bedrijf)
+        embed.add_field(name=bedrijf, value=f"Prijs: {await getPrice(bedrijf)} | Aandelen beschikbaar: {data['bedrijven'][bedrijf]}", inline=False)
     return embed
