@@ -142,10 +142,13 @@ async def embedCurrentPrice(bedrijf: str):
     data = getData(bedrijf)
     aandelenbesackibaar = data["bedrijven"][bedrijf]
     embed.add_field(name="Aantal aandelen beschikbaar", value=f"{aandelenbesackibaar}", inline=False)
-    prijsuur = createStringfromList(await getLaatsteUur(bedrijf))
-    embed.add_field(name="Prijs laatste uur", value=f"{prijsuur}", inline=False)
-    prijsdag = createStringfromList(await getLaatsteDag(bedrijf))
-    embed.add_field(name="Prijs laatste 24 uur", value=f"{prijsdag}", inline=False)
+    embed.add_field(
+        name="Spreadsheet", value="https://docs.google.com/spreadsheets/d/14glUJeNNB-EiyI9fsyGGpX6CWwfgVWTlAcO0qf4JdDI/edit?usp=sharing", inline=False
+    )
+    # prijsuur = createStringfromList(await getLaatsteUur(bedrijf))
+    # embed.add_field(name="Prijs laatste uur", value=f"{prijsuur}", inline=False)
+    # prijsdag = createStringfromList(await getLaatsteDag(bedrijf))
+    # embed.add_field(name="Prijs laatste 24 uur", value=f"{prijsdag}", inline=False)
     return embed
 
 
