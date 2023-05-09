@@ -58,6 +58,9 @@ def AddToPortemonnee(userID: str, bedrijf: str, amount: int):
     else:
         data["portemonnees"][userID] = {bedrijf: amount}
 
+    if data["portemonnees"][userID][bedrijf] == 0:
+        del data["portemonnees"][userID][bedrijf]
+
     with open("stonks/stonks.json", "w") as f:
         json.dump(data, f, indent=2)
 
@@ -115,10 +118,14 @@ async def embedPortemonnee(userID: str) -> discord.Embed:
     portomonnee = getPortemonnee(userID)
     if len(portomonnee) == 0:
         return embed
+    totalewaarde = 0
     for bedrijf in portomonnee:
         if portomonnee[bedrijf] == 0:
             continue
-        embed.add_field(name=bedrijf, value=f"{portomonnee[bedrijf]} aandelen | Huidige prijs: {await getPrice(bedrijf)}", inline=False)
+        prijs = await getPrice(bedrijf)
+        embed.add_field(name=bedrijf, value=f"{portomonnee[bedrijf]} aandelen | Huidige prijs: {prijs}", inline=False)
+        totalewaarde += portomonnee[bedrijf] * prijs
+    embed.title = f"Portomonnee | Totale waarde: {totalewaarde}"
     return embed
 
 
@@ -159,3 +166,17 @@ async def embedKoers():
         data = getData(bedrijf)
         embed.add_field(name=bedrijf, value=f"Prijs: {await getPrice(bedrijf)} | Aandelen beschikbaar: {data['bedrijven'][bedrijf]}", inline=False)
     return embed
+
+
+async def SellAllButtonView(userID: str):
+    async def SellAll(interaction: discord.Interaction):
+        portomonnee = getPortemonnee(userID)
+        for bedrijf in portomonnee:
+            await SellStonks(userID, bedrijf, portomonnee[bedrijf])
+        await interaction.response.defer()
+
+    view = discord.ui.View()
+    button = discord.ui.Button(label="Verkoop alles", style=discord.ButtonStyle.red)
+    button.callback = SellAll
+    view.add_item(button)
+    return view

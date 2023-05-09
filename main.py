@@ -35,7 +35,7 @@ from utils.scoresUtils import (
     Donate,
 )
 from utils.embeds import embedLuckyWheel, embedTrinna, embedOutro
-from utils.StonkUtils import BuyStonks, getBedrijven, embedPortemonnee, SellStonks, embedCurrentPrice, getPortemonnee, embedKoers
+from utils.StonkUtils import BuyStonks, SellAllButtonView, getBedrijven, embedPortemonnee, SellStonks, embedCurrentPrice, getPortemonnee, embedKoers
 from muziek import muziekspelen
 
 intents = discord.Intents.all()
@@ -617,7 +617,8 @@ async def self(interaction: discord.Interaction, bedrijf: str, amount: int):
 @tree.command(name="portemonnee", description="Kijk welke stonks je op het moment bezit", guild=guild)
 async def self(interaction: discord.Interaction):
     embed = await embedPortemonnee(str(interaction.user.id))
-    await interaction.response.send_message(embed=embed)
+    view = await SellAllButtonView(str(interaction.user.id))
+    await interaction.response.send_message(embed=embed, view=view)
 
 
 async def portemonnee_autocomplete(
