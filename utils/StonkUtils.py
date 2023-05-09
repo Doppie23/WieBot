@@ -170,6 +170,9 @@ async def embedKoers():
 
 async def SellAllButtonView(userID: str):
     async def SellAll(interaction: discord.Interaction):
+        if str(interaction.user.id) != userID:
+            await interaction.response.send_message("gsat is niet jouw knop", ephemeral=True)
+            return
         portomonnee = getPortemonnee(userID)
         for bedrijf in portomonnee:
             await SellStonks(userID, bedrijf, portomonnee[bedrijf])
