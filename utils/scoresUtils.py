@@ -333,14 +333,15 @@ class luckywheel:
         return getal
 
     def _RandomNieuweGetal(self):
+        multiplier = 100
         if self.hoofprijsbeschikbaar:
             Hoofdprijs = random.choices(population=[False, True], weights=[9, 1])[0]
             if Hoofdprijs:
                 self.hoofprijsbeschikbaar = False
-                return 500
+                return 500 * multiplier
         getal = random.randrange(self.begin, self.eind, step=5)
         getal = self._randomnegatief(getal)
-        return getal
+        return getal * multiplier
 
     def VoegGetalToe(self):
         getal = self._RandomNieuweGetal()
