@@ -125,7 +125,8 @@ def steel(userID: str, TargetID: str) -> bool:
     puntenFraction = 1 - puntenFraction  # om het systeem om te draaien, als je veel punten heb steel je minder van kleine spelers
 
     puntenErbij = round(data[TargetID] * puntenFraction)
-    puntenErbij = round(puntenErbij * 0.3)
+    percentage = random.choice(range(5, 20)) * 0.01
+    puntenErbij = round(puntenErbij * percentage)
 
     if winnaarID == userID:  # steel gelukt
         setPunten(winnaarID, data[winnaarID] + puntenErbij)
