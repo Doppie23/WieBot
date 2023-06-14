@@ -35,7 +35,6 @@ from utils.scoresUtils import (
     Donate,
 )
 from utils.embeds import embedLuckyWheel, embedTrinna, embedOutro
-from utils.StonkUtils import BuyStonks, SellAllButtonView, getBedrijven, embedPortemonnee, SellStonks, embedCurrentPrice, getPortemonnee, embedKoers
 from muziek import muziekspelen
 
 intents = discord.Intents.all()
@@ -366,6 +365,9 @@ async def users_autocomplete(
 @tree.command(name="steel", description="steel punten van iemand anders", guild=guild)
 @app_commands.autocomplete(target=users_autocomplete)
 async def self(interaction: discord.Interaction, target: str):
+    if not json.load(open("scores/gamebezig.json"))["bezig"]:
+        await interaction.response.send_message("Spel is niet bezig.", ephemeral=True)
+        return
     if await TimeoutCheck(interaction):
         return
     if not CheckIfUserExists(str(interaction.user.id)):
@@ -399,8 +401,11 @@ async def self(interaction: discord.Interaction, target: str):
 )
 @tree.command(name="roulette", description="rng certified", guild=guild)
 async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_commands.Choice[str], nummer: int = None):
-    if await TimeoutCheck(interaction):
+    if not json.load(open("scores/gamebezig.json"))["bezig"]:
+        await interaction.response.send_message("Spel is niet bezig.", ephemeral=True)
         return
+    # if await TimeoutCheck(interaction):
+    #     return
     if bet_amount <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
         return
@@ -433,8 +438,11 @@ async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_
 
 @tree.command(name="trinna", description="trinna is altijd goed", guild=guild)
 async def self(interaction: discord.Interaction, bet_amount: int):
-    if await TimeoutCheck(interaction):
+    if not json.load(open("scores/gamebezig.json"))["bezig"]:
+        await interaction.response.send_message("Spel is niet bezig.", ephemeral=True)
         return
+    # if await TimeoutCheck(interaction):
+    #     return
     if bet_amount <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
         return
@@ -455,6 +463,9 @@ async def self(interaction: discord.Interaction, bet_amount: int):
 
 @tree.command(name="luckywheel", description="Altijd prijs!!!", guild=guild)
 async def self(interaction: discord.Interaction):
+    if not json.load(open("scores/gamebezig.json"))["bezig"]:
+        await interaction.response.send_message("Spel is niet bezig.", ephemeral=True)
+        return
     if await TimeoutCheck(interaction):
         return
     data = getdata()
@@ -483,8 +494,11 @@ async def self(interaction: discord.Interaction):
 
 @tree.command(name="blackjack", description="Unlimited Money Glitch 100% WORKING!!1!", guild=guild)
 async def self(interaction: discord.Interaction, bet_amount: int):
-    if await TimeoutCheck(interaction):
+    if not json.load(open("scores/gamebezig.json"))["bezig"]:
+        await interaction.response.send_message("Spel is niet bezig.", ephemeral=True)
         return
+    # if await TimeoutCheck(interaction):
+    #     return
     if bet_amount <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
         return
@@ -514,6 +528,9 @@ PaardenRace = MultiplayerPaarden(paarden)
 
 @tree.command(name="paardenrace", description="Start de paardenrace.", guild=guild)
 async def self(interaction: discord.Interaction):
+    if not json.load(open("scores/gamebezig.json"))["bezig"]:
+        await interaction.response.send_message("Spel is niet bezig.", ephemeral=True)
+        return
     if PaardenRace.RaceJoinable:
         await interaction.response.send_message("Er is al een race gestart!", ephemeral=True)
         return
@@ -531,6 +548,9 @@ async def paarden_autocomplete(
 @app_commands.autocomplete(paard=paarden_autocomplete)
 @tree.command(name="join-paardenrace", description="join een paardenrace", guild=guild)
 async def self(interaction: discord.Interaction, paard: str, inzet: int):
+    if not json.load(open("scores/gamebezig.json"))["bezig"]:
+        await interaction.response.send_message("Spel is niet bezig.", ephemeral=True)
+        return
     if inzet <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
         return
@@ -574,6 +594,9 @@ async def self(interaction: discord.Interaction):
 @tree.command(name="donate", description="doneer punten aan iemand anders.", guild=guild)
 @app_commands.autocomplete(target=users_autocomplete)
 async def self(interaction: discord.Interaction, target: str, amount: int):
+    if not json.load(open("scores/gamebezig.json"))["bezig"]:
+        await interaction.response.send_message("Spel is niet bezig.", ephemeral=True)
+        return
     if amount <= 0:
         await interaction.response.send_message("Je kan niet een negatief aantal of nul punten doneren.", ephemeral=True)
         return
@@ -589,6 +612,17 @@ async def self(interaction: discord.Interaction, target: str, amount: int):
     Donate(str(interaction.user.id), str(target), amount)
     targetMember: discord.Member = client.get_user(int(target))
     await interaction.response.send_message(f"{interaction.user.mention} hebt {amount} punten gedoneerd aan {targetMember.mention}.")
+
+
+@tree.command(name="stopspel", description="Stop het gokspel.", guild=guild)
+@app_commands.check(check_if_is_admin)
+async def self(interaction: discord.Interaction):
+    with open("scores/gamebezig.json") as f:
+        data = json.load(f)
+    data["bezig"] = False
+    with open("scores/gamebezig.json", "w") as f:
+        json.dump(data, f, indent=2)
+    await interaction.response.send_message("Gokspel gestopt.", ephemeral=True)
 
 
 @client.event

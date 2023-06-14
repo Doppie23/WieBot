@@ -18,9 +18,10 @@ def getAntwoordzonderPrompt(prompt: str, antwoorden: list):
     """
     Geeft eerste antwoord als dat verder gaat op prompt anders tweede antwoord
     """
-    if antwoorden[0] == prompt:
-        return antwoorden[1]
-    elif antwoorden[0] == "":
-        return antwoorden[1]
-    else:
-        return antwoorden[0]
+    return antwoorden[1]
+    # if antwoorden[0] == prompt:
+    #     return antwoorden[1]
+    # elif antwoorden[0] == "":
+    #     return antwoorden[1]
+    # else:
+    #     return antwoorden[0]
