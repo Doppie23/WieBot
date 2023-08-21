@@ -1,7 +1,7 @@
 import aiohttp
 
 timeout = aiohttp.ClientTimeout(total=5)
-url = "http://192.168.2.30:8000/getresponse"
+url = "http://192.168.2.41:8000/getresponse"
 
 
 async def getResponse(prompt: str) -> list:
