@@ -2,7 +2,7 @@ import discord
 import os
 from discord import app_commands
 from dotenv import load_dotenv
-from utils.summon import summon
+from utils.summon import Summon
 
 load_dotenv()
 
@@ -46,7 +46,7 @@ async def users_autocomplete(
 @tree.command(name="test", description="test", guild=guild)
 @app_commands.autocomplete(user_id=users_autocomplete)
 async def self(interaction: discord.Interaction, user_id: str):
-    await summon(interaction, int(user_id))
+    await Summon().start(interaction, int(user_id))
 
 
 client.run(TOKEN)
