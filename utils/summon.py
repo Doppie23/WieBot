@@ -73,8 +73,14 @@ class Summon:
 
     async def send_pm_to_user(self):
         dm_channel = await self.user.create_dm()
+        gifs = [
+            "https://tenor.com/view/you-there-you-are-there-car-you-there-cat-you-are-there-gif-18675776",
+            "https://tenor.com/view/dory-are-you-there-where-you-at-gif-12631596",
+            "https://tenor.com/view/up-dog-dug-waiting-patient-gif-14540614",
+            "https://tenor.com/view/hey-marmot-me-calling-my-friends-squirrel-are-you-alive-gif-15790032"
+        ]
         await dm_channel.send(f"{self.user.mention}")
-        await dm_channel.send(f"https://tenor.com/view/you-there-you-are-there-car-you-there-cat-you-are-there-gif-18675776", view=self.generate_view())
+        await dm_channel.send(random.choice(gifs), view=self.generate_view())
 
     async def on_yes(self, interaction: discord.Interaction):
         self.timer_still_going = False
@@ -92,7 +98,7 @@ class Summon:
         def generate_loadbar():
             empty_emoji = "🔳"
             full_emoji = "🟦"
-            arrow_emoji = "🔵"
+            arrow_emoji = ""
 
             progress_bar = ""
             for i in range(0, 10):
