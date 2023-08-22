@@ -13,6 +13,7 @@ from TimeoutCommands.Timeout import TimeoutCheck, addTimeoutToCommand
 from utils.paarden_utils import Horse, MultiplayerPaarden
 from utils.redditpost import randomcopypasta, randomshitpost
 from utils.noeputils import totaal_user, meeste_ls, clip_van_gebruiker_met_meeste_ls, add_noep, rem_noep
+from utils.summon import Summon
 from utils.trackleave import addScoreLaatsteLeave, Leaderboard
 from utils.nanogpt_utils import getResponse, getAntwoordzonderPrompt
 from utils.scoresUtils import (
@@ -623,6 +624,25 @@ async def self(interaction: discord.Interaction):
     with open("scores/gamebezig.json", "w") as f:
         json.dump(data, f, indent=2)
     await interaction.response.send_message("Gokspel gestopt.", ephemeral=True)
+
+
+async def guild_users_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+) -> list[app_commands.Choice[str]]:
+    guild = interaction.guild
+    users = guild.members
+    return [
+        app_commands.Choice(name=user.name, value=str(user.id))
+        for user in users
+        if current.lower() in user.name.lower() and not user.bot and user.id != client.user.id
+    ]
+
+
+@tree.command(name="summon", description="Summon iemand", guild=guild)
+@app_commands.autocomplete(user_id=guild_users_autocomplete)
+async def self(interaction: discord.Interaction, user_id: str):
+    await Summon().start(interaction, int(user_id))
 
 
 @client.event

@@ -1,3 +1,4 @@
+import random
 import discord
 from discord.emoji import Emoji
 from discord.enums import ButtonStyle
@@ -25,48 +26,88 @@ class Button(discord.ui.Button):
 class Summon:
     async def start(self, interaction: discord.Interaction, user_id: discord.User.id) -> None:
         self.original_interaction = interaction
-        self.user_id = user_id
+        self.user = self.original_interaction.client.get_user(user_id)
         self.timer_still_going = True
+        self.user_responed = False
+        self.user_responed_yes = False
 
-        await self.original_interaction.response.send_message("0%")
+        await self.original_interaction.response.send_message(
+            embed=self.generate_embed("/summon", f"Started summoning {self.user.name}.", "STARTED", color=discord.Colour.blurple())
+        )
 
-        asyncio.get_event_loop().create_task(self.timer(100))
-        await self.send_message_to_user()
+        await self.send_pm_to_user()
+        # asyncio.get_event_loop().create_task(self.timer(100))
+        await self.timer(100)
+        if not self.user_responed_yes and self.user_responed:
+            await self.original_interaction.edit_original_response(
+                embed=self.generate_embed("/summon", f"{self.user.name} doesn't want to get summoned...", "SUMMON FAILED", discord.Color.orange())
+            )
+        elif self.user_responed_yes:
+            await self.original_interaction.edit_original_response(
+                embed=self.generate_embed("/summon", f"Succesfully summoned {self.user.name}.", "SUMMONED USER", discord.Colour.green())
+            )
+        else:
+            await self.original_interaction.edit_original_response(
+                embed=self.generate_embed("/summon", f"Failed to summon {self.user.name}.", "SUMMON FAILED", discord.Colour.red())
+            )
 
     async def timer(self, seconds=100) -> None:
-        await self.original_interaction.edit_original_response(content="1%")
+        max_seconds = int(seconds)
         interval = seconds / 10
 
         while self.timer_still_going and seconds > 0:
-            print(seconds)
             await asyncio.sleep(1)
-
             seconds -= 1
-            if seconds % interval == 0:
-                await self.original_interaction.edit_original_response(content=f"{seconds}%")
-        print("timer done")
+
+            if (seconds % interval == 0) or seconds == max_seconds - 1:
+                # await self.original_interaction.edit_original_response(content=f"{max_seconds - seconds + random.randint(0, 9)}%")
+                await self.original_interaction.edit_original_response(
+                    embed=self.generate_embed(
+                        "/summon",
+                        f"Trying to find {self.user.name}...",
+                        f"{max_seconds - seconds + random.randint(0, 9)}%",
+                        progress=(max_seconds - seconds) / max_seconds,
+                    )
+                )
         self.timer_still_going = False
 
-    async def send_message_to_user(self):
-        # async def callback(interaction):
-
-        user = self.original_interaction.client.get_user(self.user_id)
-
-        dm_channel = await user.create_dm()
+    async def send_pm_to_user(self):
+        dm_channel = await self.user.create_dm()
+        await dm_channel.send(f"{self.user.mention}")
         await dm_channel.send(f"https://tenor.com/view/you-there-you-are-there-car-you-there-cat-you-are-there-gif-18675776", view=self.generate_view())
 
-        # await callback(interaction) -> None:
-
     async def on_yes(self, interaction: discord.Interaction):
-        print("ja", self.timer_still_going)
         self.timer_still_going = False
+        self.user_responed = True
+        self.user_responed_yes = True
+        await interaction.response.defer()
 
     async def on_no(self, interaction: discord.Interaction):
-        print("no", self.timer_still_going)
         self.timer_still_going = False
+        self.user_responed = True
 
-    def generate_embed(self, title, description, color, footer):
-        embed = discord.Embed(title=title, description=description, color=color, footer=footer)
+        await interaction.response.defer()
+
+    def generate_embed(self, title: str, description: str, footer: str, color: discord.Colour = discord.Colour.blue(), progress: float = None):
+        def generate_loadbar():
+            empty_emoji = "🔳"
+            full_emoji = "🟦"
+            arrow_emoji = "🔵"
+
+            progress_bar = ""
+            for i in range(0, 10):
+                if i < (progress * 10):
+                    progress_bar += full_emoji
+                else:
+                    progress_bar += empty_emoji
+            progress_bar = progress_bar.replace(empty_emoji, arrow_emoji, 1)
+            return progress_bar
+
+        embed = discord.Embed(title=title, description=description, color=color)
+        embed.set_footer(text=footer)
+        if progress is not None:
+            embed.add_field(name="Progress:", value=generate_loadbar())
+        embed.set_thumbnail(url=self.user.avatar.url)
         return embed
 
     def generate_view(self):
