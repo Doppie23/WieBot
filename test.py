@@ -44,9 +44,9 @@ async def users_autocomplete(
 
 
 @tree.command(name="summon", description="Summon iemand", guild=guild)
-@app_commands.autocomplete(user_id=users_autocomplete)
-async def self(interaction: discord.Interaction, user_id: str):
-    await Summon().start(interaction, int(user_id))
+@app_commands.autocomplete(user=users_autocomplete)
+async def self(interaction: discord.Interaction, user: str):
+    await Summon().start(interaction, int(user))
 
 
 client.run(TOKEN)
