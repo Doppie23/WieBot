@@ -87,12 +87,13 @@ class Summon:
         self.user_responed = True
         self.user_responed_yes = True
         await interaction.response.defer()
+        interaction.message.edit("https://tenor.com/view/aight-bet-aight-bet-cat-gif-25610485")
 
     async def on_no(self, interaction: discord.Interaction):
         self.timer_still_going = False
         self.user_responed = True
-
         await interaction.response.defer()
+        interaction.message.edit("https://tenor.com/view/sad-face-ok-cute-baby-gif-14541209")
 
     def generate_embed(self, title: str, description: str, footer: str, color: discord.Colour = discord.Colour.blue(), progress: float = None):
         def generate_loadbar():
