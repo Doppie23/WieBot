@@ -60,7 +60,7 @@ class Summon:
             seconds -= 1
 
             if (seconds % interval == 0) or seconds == max_seconds - 1:
-                percentage = max_seconds - seconds + random.randint(0, 9)
+                percentage = ((max_seconds - seconds) / 100) + random.randint(0, 9)
                 # await self.original_interaction.edit_original_response(content=f"{max_seconds - seconds + random.randint(0, 9)}%")
                 await self.original_interaction.edit_original_response(
                     embed=self.generate_embed(
