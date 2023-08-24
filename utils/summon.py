@@ -37,7 +37,7 @@ class Summon:
 
         await self.send_pm_to_user()
         # asyncio.get_event_loop().create_task(self.timer(100))
-        await self.timer(100)
+        await self.timer(60)
         if not self.user_responed_yes and self.user_responed:
             await self.original_interaction.edit_original_response(
                 embed=self.generate_embed("/summon", f"{self.user.name} doesn't want to get summoned...", "SUMMON FAILED", discord.Color.orange())
@@ -51,7 +51,7 @@ class Summon:
                 embed=self.generate_embed("/summon", f"Failed to summon {self.user.name}.", "SUMMON FAILED", discord.Colour.red())
             )
 
-    async def timer(self, seconds=100) -> None:
+    async def timer(self, seconds=60) -> None:
         max_seconds = int(seconds)
         interval = seconds / 10
 
@@ -60,13 +60,14 @@ class Summon:
             seconds -= 1
 
             if (seconds % interval == 0) or seconds == max_seconds - 1:
+                percentage = max_seconds - seconds + random.randint(0, 9)
                 # await self.original_interaction.edit_original_response(content=f"{max_seconds - seconds + random.randint(0, 9)}%")
                 await self.original_interaction.edit_original_response(
                     embed=self.generate_embed(
                         "/summon",
                         f"Trying to find {self.user.name}...",
-                        f"{max_seconds - seconds + random.randint(0, 9)}%",
-                        progress=(max_seconds - seconds) / max_seconds,
+                        f"{percentage if percentage < 100 else 100}%",
+                        progress=percentage / 100,
                     )
                 )
         self.timer_still_going = False
@@ -77,7 +78,7 @@ class Summon:
             "https://tenor.com/view/you-there-you-are-there-car-you-there-cat-you-are-there-gif-18675776",
             "https://tenor.com/view/dory-are-you-there-where-you-at-gif-12631596",
             "https://tenor.com/view/up-dog-dug-waiting-patient-gif-14540614",
-            "https://tenor.com/view/hey-marmot-me-calling-my-friends-squirrel-are-you-alive-gif-15790032"
+            "https://tenor.com/view/hey-marmot-me-calling-my-friends-squirrel-are-you-alive-gif-15790032",
         ]
         await dm_channel.send(f"{self.user.mention}")
         await dm_channel.send(random.choice(gifs), view=self.generate_view())
@@ -87,13 +88,13 @@ class Summon:
         self.user_responed = True
         self.user_responed_yes = True
         await interaction.response.defer()
-        await interaction.message.edit(content = "https://tenor.com/view/aight-bet-aight-bet-cat-gif-25610485", view=None)
+        await interaction.message.edit(content="https://tenor.com/view/aight-bet-aight-bet-cat-gif-25610485", view=None)
 
     async def on_no(self, interaction: discord.Interaction):
         self.timer_still_going = False
         self.user_responed = True
         await interaction.response.defer()
-        await interaction.message.edit(content = "https://tenor.com/view/sad-face-ok-cute-baby-gif-14541209", view=None)
+        await interaction.message.edit(content="https://tenor.com/view/sad-face-ok-cute-baby-gif-14541209", view=None)
 
     def generate_embed(self, title: str, description: str, footer: str, color: discord.Colour = discord.Colour.blue(), progress: float = None):
         def generate_loadbar():
