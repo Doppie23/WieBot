@@ -100,7 +100,7 @@ class Summon:
         def generate_loadbar():
             empty_emoji = "🔳"
             full_emoji = "🟦"
-            arrow_emoji = ""
+            arrow_emoji = "🟦"
 
             progress_bar = ""
             for i in range(0, 10):
