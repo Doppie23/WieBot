@@ -2,6 +2,7 @@ import os
 import random
 import re
 import traceback
+import aiohttp
 import discord
 from discord import app_commands
 from dotenv import load_dotenv
@@ -119,6 +120,9 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
             source = os.getcwd() + file
             bericht = "RNG Certified 🍀"
         else:
+            await interaction.response.send_message(
+                "Niet iedereen die meedoet zit in call, dus deze outro kan niet.", ephemeral=True
+            )
             await interaction.response.send_message(
                 "Niet iedereen die meedoet zit in call, dus deze outro kan niet.", ephemeral=True
             )
