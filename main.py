@@ -119,7 +119,9 @@ async def self(interaction: discord.Interaction, choices: app_commands.Choice[st
             source = os.getcwd() + file
             bericht = "RNG Certified 🍀"
         else:
-            await interaction.response.send_message("Niet iedereen die meedoet zit in call, dus deze outro kan niet.", ephemeral=True)
+            await interaction.response.send_message(
+                "Niet iedereen die meedoet zit in call, dus deze outro kan niet.", ephemeral=True
+            )
             return
 
     voice_channel = interaction.user.voice
@@ -317,7 +319,9 @@ async def self(interaction: discord.Interaction):
     user = user_vote[1]
     vote = user_vote[0]
     totaal_l = totaal_user(str(user))
-    await interaction.response.send_message(f"{user} heeft al {vote} L's gepakt met deze clip. In totaal heeft {user} al {totaal_l} L's gepakt. {clip}")
+    await interaction.response.send_message(
+        f"{user} heeft al {vote} L's gepakt met deze clip. In totaal heeft {user} al {totaal_l} L's gepakt. {clip}"
+    )
     original_message = await interaction.original_response()
     await discord.InteractionMessage.add_reaction(original_message, "🇱")
     f.close()
@@ -337,7 +341,9 @@ async def self(interaction: discord.Interaction):
             embed.set_thumbnail(url=userob.avatar)
         nummer = i + 1
         embed.add_field(
-            name=f"{nummer}: {userob.display_name} met {totaal_ls} L's in totaal", value=f"De clip met de meeste L's ({ls_clip}) is: {clip}", inline=False
+            name=f"{nummer}: {userob.display_name} met {totaal_ls} L's in totaal",
+            value=f"De clip met de meeste L's ({ls_clip}) is: {clip}",
+            inline=False,
         )
 
     await interaction.response.send_message(embed=embed)
@@ -360,7 +366,11 @@ async def users_autocomplete(
         user = client.get_user(int(userID))
         if not user == interaction.user:
             users.append(user)
-    return [app_commands.Choice(name=user.name, value=str(user.id)) for user in users if current.lower() in user.name.lower()]
+    return [
+        app_commands.Choice(name=user.name, value=str(user.id))
+        for user in users
+        if current.lower() in user.name.lower()
+    ]
 
 
 @tree.command(name="steel", description="steel punten van iemand anders", guild=guild)
@@ -376,7 +386,9 @@ async def self(interaction: discord.Interaction, target: str):
         return
     if CheckIfUserExists(target):
         if getPunten(str(target)) <= 0:
-            await interaction.response.send_message(f"Je kan niet stelen van iemand met nul of minder punten.", ephemeral=True)
+            await interaction.response.send_message(
+                f"Je kan niet stelen van iemand met nul of minder punten.", ephemeral=True
+            )
             return
 
         isGelukt, puntenerbij = steel(str(interaction.user.id), str(target))
@@ -401,14 +413,18 @@ async def self(interaction: discord.Interaction, target: str):
     ]
 )
 @tree.command(name="roulette", description="rng certified", guild=guild)
-async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_commands.Choice[str], nummer: int = None):
+async def self(
+    interaction: discord.Interaction, bet_amount: int, bet_type: app_commands.Choice[str], nummer: int = None
+):
     if not json.load(open("scores/gamebezig.json"))["bezig"]:
         await interaction.response.send_message("Spel is niet bezig.", ephemeral=True)
         return
     # if await TimeoutCheck(interaction):
     #     return
     if bet_amount <= 0:
-        await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
+        await interaction.response.send_message(
+            "Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True
+        )
         return
 
     # check if wel genoeg punten
@@ -421,10 +437,14 @@ async def self(interaction: discord.Interaction, bet_amount: int, bet_type: app_
         await interaction.response.send_message("Je doet niet mee aan het spel.", ephemeral=True)
         return
     if bet_type.value != "number" and nummer != None:
-        await interaction.response.send_message("Je kan niet een nummer opgeven als je niet op een nummer in wil zetten.", ephemeral=True)
+        await interaction.response.send_message(
+            "Je kan niet een nummer opgeven als je niet op een nummer in wil zetten.", ephemeral=True
+        )
         return
     if bet_type.value == "number" and nummer == None:
-        await interaction.response.send_message("Geef ook een nummer op als je op een nummer in wil zetten.", ephemeral=True)
+        await interaction.response.send_message(
+            "Geef ook een nummer op als je op een nummer in wil zetten.", ephemeral=True
+        )
         return
 
     outcome, winnings = roulette(str(interaction.user.id), bet_amount, bet_type.value, nummer)
@@ -445,7 +465,9 @@ async def self(interaction: discord.Interaction, bet_amount: int):
     # if await TimeoutCheck(interaction):
     #     return
     if bet_amount <= 0:
-        await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
+        await interaction.response.send_message(
+            "Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True
+        )
         return
     data = getdata()
     if str(interaction.user.id) in data:
@@ -501,7 +523,9 @@ async def self(interaction: discord.Interaction, bet_amount: int):
     # if await TimeoutCheck(interaction):
     #     return
     if bet_amount <= 0:
-        await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
+        await interaction.response.send_message(
+            "Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True
+        )
         return
     data = getdata()
     if str(interaction.user.id) in data:
@@ -543,7 +567,11 @@ async def paarden_autocomplete(
     interaction: discord.Interaction,
     current: str,
 ) -> list[app_commands.Choice[str]]:
-    return [app_commands.Choice(name=paard.getNaamMetKansen(), value=paard.naam) for paard in paarden if current.lower() in paard.naam.lower()]
+    return [
+        app_commands.Choice(name=paard.getNaamMetKansen(), value=paard.naam)
+        for paard in paarden
+        if current.lower() in paard.naam.lower()
+    ]
 
 
 @app_commands.autocomplete(paard=paarden_autocomplete)
@@ -553,7 +581,9 @@ async def self(interaction: discord.Interaction, paard: str, inzet: int):
         await interaction.response.send_message("Spel is niet bezig.", ephemeral=True)
         return
     if inzet <= 0:
-        await interaction.response.send_message("Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True)
+        await interaction.response.send_message(
+            "Je kan niet een negatief aantal of nul punten inzetten.", ephemeral=True
+        )
         return
     data = getdata()
     if str(interaction.user.id) in data:
@@ -599,7 +629,9 @@ async def self(interaction: discord.Interaction, target: str, amount: int):
         await interaction.response.send_message("Spel is niet bezig.", ephemeral=True)
         return
     if amount <= 0:
-        await interaction.response.send_message("Je kan niet een negatief aantal of nul punten doneren.", ephemeral=True)
+        await interaction.response.send_message(
+            "Je kan niet een negatief aantal of nul punten doneren.", ephemeral=True
+        )
         return
     data = getdata()
     if str(interaction.user.id) in data:
@@ -612,7 +644,9 @@ async def self(interaction: discord.Interaction, target: str, amount: int):
 
     Donate(str(interaction.user.id), str(target), amount)
     targetMember: discord.Member = client.get_user(int(target))
-    await interaction.response.send_message(f"{interaction.user.mention} hebt {amount} punten gedoneerd aan {targetMember.mention}.")
+    await interaction.response.send_message(
+        f"{interaction.user.mention} hebt {amount} punten gedoneerd aan {targetMember.mention}."
+    )
 
 
 @tree.command(name="stopspel", description="Stop het gokspel.", guild=guild)
@@ -717,7 +751,10 @@ async def on_message(message: discord.Message):
         except Exception as e:
             print("ai troep werkt niet")
             print(e)
-            error_message = await message.channel.send("AI doet het nu ff niet")
+            messageStr = "AI doet het nu ff niet"
+            if type(e) == asyncio.exceptions.TimeoutError:
+                messageStr = f"<@327038629585223690> moet de bot aanzetten"
+            error_message = await message.channel.send(messageStr)
             await error_message.delete(delay=2)
 
 
@@ -749,7 +786,9 @@ def random_nummer():
 async def on_test_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     if isinstance(error, app_commands.CommandOnCooldown):
         cooldownTijd = int(re.search(r"\d+", str(error)).group())
-        await interaction.response.send_message(f"Command is op cooldown. Probeer nog een keer in {cooldownTijd} seconden.", ephemeral=True)
+        await interaction.response.send_message(
+            f"Command is op cooldown. Probeer nog een keer in {cooldownTijd} seconden.", ephemeral=True
+        )
     else:
         print(error)
         traceback.print_exc()
